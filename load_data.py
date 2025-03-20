@@ -214,7 +214,7 @@ class GetData:
             return result
 
         except Exception as e:
-            print(e)
+            print('Error: ', e)
         finally:
             if self.conn:
                 self.conn.close()
