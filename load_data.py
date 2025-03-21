@@ -58,10 +58,10 @@ class GetData:
         except Exception as e:
             print(e)
 
-    def get_id_category(self, category_name):
+    def get_id_tag(self, tag_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT Id_category FROM User_categories WHERE Name_category = %s", category_name)
+            cursor.execute("SELECT ID_tag FROM Tags WHERE Name_tag = %s", tag_name)
             result = cursor.fetchall()
 
             return result
@@ -148,13 +148,13 @@ class GetData:
             if flag:
 
                 id_book = self.get_id_book(book_name)
-                id_tag = self.get_id_author(tag_name)
+                id_tag = self.get_id_tag(tag_name)
 
-                cursor.execute("SELECT ID FROM Books_UserCategories WHERE ID_book = %s AND ID_category = %s",
+                cursor.execute("SELECT ID FROM Books_Tags WHERE ID_book = %s AND ID_tag = %s",
                                [id_book, id_tag])
 
             else:
-                query = "SELECT * FROM User_categories WHERE Name_category = %s"
+                query = "SELECT * FROM Tags WHERE Name_tag = %s"
                 cursor.execute(query, tag_name)
 
             result = cursor.fetchall()
@@ -174,7 +174,7 @@ class GetData:
             if flag:
 
                 id_book = self.get_id_book(book_name)
-                id_genre = self.get_id_author(genre_name)
+                id_genre = self.get_id_genre(genre_name)
 
                 cursor.execute("SELECT ID FROM Books_Genres WHERE ID_book = %s AND ID_genre = %s",
                                [id_book, id_genre])
@@ -200,7 +200,7 @@ class GetData:
             if flag:
 
                 id_book = self.get_id_book(book_name)
-                id_format = self.get_id_author(format_name)
+                id_format = self.get_id_formats(format_name)
 
                 cursor.execute("SELECT ID FROM Books_Formats WHERE ID_book = %s AND ID_format = %s",
                                [id_book, id_format])
