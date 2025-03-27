@@ -1,9 +1,13 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
 from create_db import setup_database
 from main_window import Ui_MainWindow
+from save import add_book
+from load_data import GetData
 import shutil
+from pathlib import Path  
+import sqlite3 ##############
 
 class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -34,19 +38,19 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
 # Функции открытия окон
     def show_window_add_book(self):
-        print("Add book")
+        # print("Add book")
         self.stackedWidget.setCurrentIndex(1)
     
     def show_window_search_book(self):
-        print("Search book")
+        # print("Search book")
         self.stackedWidget.setCurrentIndex(3)
     
     def show_window_add_category(self):
-        print("Add category")
+        # print("Add category")
         self.stackedWidget.setCurrentIndex(5)
     
     def show_window_delete_category(self):
-        print("Delete category")
+        # print("Delete category")
         self.stackedWidget.setCurrentIndex(4)
     
     def show_main_window(self):
@@ -58,14 +62,21 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Получение данных о книге
         book_name = self.lineEdit_2.text()
         year = self.lineEdit_3.text()
-        author = self.lineEdit_4.text()
-        path_book = self.lineEdit_5.text()
+        author_firstname = self.window_add_book_firstname.text()
+        author_lastname = self.window_add_book_lastname.text()
+        author_middlename = self.window_add_book_middlename.text()
+        author_nikname= self.window_add_book_nikname.text()        
+        # author = self.lineEdit_4.text()
+        path_book = self.window_add_file_path.text()
 
         # Проверка
-        print(book_name)
-        print(year)
-        print(author)
-        print(path_book)
+        # print("Имя книги: ", book_name)
+        # print("Год: ", year)
+        # print("Имя автора: ", author_firstname)
+        # print("Фаммилия автора: ", author_lastname)
+        # print("Отчество автора: ", author_middlename)
+        # print("Псевдоним автора: ", author_nikname)
+        # print("Путь до файла: ", path_book)
 
         # Копирование файла
 
@@ -77,14 +88,82 @@ class MyApp(QMainWindow, Ui_MainWindow):
             elif ch != " ":
                 book_name_for_db += ch
         
-        # Получение расширения файла
-        book_extension = os.path.splitext(path_book)  
+        # Получение расширения и пути до файла
+        book_path = os.path.splitext(path_book)[0]
+        book_extension = os.path.splitext(path_book)[1] 
+
+        # Проверка расширения файла для книг
+        if book_extension != '.fb2' and book_extension != '.pdf' and book_extension != '.txt':
+            QMessageBox.information(self, 'Сообщение', 'Выберите файл с расширением для книги')
+            return
+
+        # Проверка корректности года
+        try:
+            int(year)
+        except ValueError:
+            QMessageBox.information(self, 'Сообщение', 'Дата должна быть целым числом')
+            return
+
+        if int(year) <= 0 or int(year) >= 3000:
+            QMessageBox.information(self, 'Сообщение', 'Введите дату от 0 до 3000')
+            return
+
+        # Проверка автора
+        if author_firstname == "" or author_lastname == "":
+            QMessageBox.information(self, 'Сообщение', 'Ведите имя и фамилию автора')
+            return
+
+        if len(author_firstname) < 2:
+            QMessageBox.information(self, 'Сообщение', 'Имя не может состоить из 1 буквы')
+            return
+
+        if len(author_lastname) < 5:
+            QMessageBox.information(self, 'Сообщение', 'Фамили не может состять из 4 и меньше букв')
+            return
+
+        if book_name == "":
+            QMessageBox.information(self, 'Сообщение', 'Введите название книги')
+            return
+
+        # Создание имени для файла для папки books
+        book_name_for_db += "_" + book_extension[1:]
+
+        # Добавление книги
+        if add_book( book_name.lower(), int(year)):
+            QMessageBox.information(self, 'Сообщение', 'Книга добавлена')
+        else:
+            QMessageBox.information(self, 'Сообщение', 'Книга не добавлена')
+
+        # Проверка на существование данной книги в БД
+
+        # Получение id добавленной книги
+        loaddata = GetData()
+        loaddata.conn = sqlite3.connect("book_db.db") ################ ТУТ НЕ НАДО ТАК
+        id_book = loaddata.get_id_book(book_name.lower()) # Вывод (id, )
+
+        # print("path_book:", path_book)
+        # print("book_name_for_db: ", book_name_for_db)
+        # print("book_extension: ", book_extension)
+        # print("new_path: ", book_name_for_db + book_extension)
+        # base_dir = Path(__file__).parent.resolve()
+        # print("base dir:", base_dir)
+
+        # Копируем файл в папку books
+        base_dir = Path(__file__).parent.resolve()
+        books_dir = base_dir / "books"
+        dest_path = books_dir / f"{book_name_for_db}{book_extension}"
+        shutil.copy(path_book, dest_path)
+        
+        # shutil.copy(path_book, os.path.join('/books/', f"{book_name_for_db + book_extension}")
+
+        # if book_extension == ".fb2":
+        #     pass
 
         # print("Расиширение файла: ", book_extension[1])
         # print(book_name_for_db)
         
-        book_name_for_db += "_" + book_extension[1][1:]
-        print("Имя для файла в папке book: ", book_name_for_db)
+        # print("Имя для файла в папке book: ", book_name_for_db)
+
         #shutil.copy(source_file, destination_folder + f"{}.pdf")
 
 
@@ -102,7 +181,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         
         # Если файл выбран (не нажата отмена)
         if file_name:
-            self.lineEdit_5.setText(f"{file_name}")
+            self.window_add_file_path.setText(f"{file_name}")
 
 # Функция проерки существования файла БД
     def create_db(self):
@@ -114,6 +193,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
     window = MyApp()
     window.showMaximized()
