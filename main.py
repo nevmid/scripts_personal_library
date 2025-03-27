@@ -7,7 +7,7 @@ from save import add_book
 from load_data import GetData
 import shutil
 from pathlib import Path  
-import sqlite3 ##############
+import sqlite3 #############
 
 class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
