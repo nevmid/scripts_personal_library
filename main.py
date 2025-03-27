@@ -3,11 +3,11 @@ import os
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
 from create_db import setup_database
 from main_window import Ui_MainWindow
-from save import add_book
+from save import add_book, create_extension, connect_book_extension
 from load_data import GetData
 import shutil
 from pathlib import Path  
-import sqlite3 #############
+import sqlite3 ##############
 
 class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -20,6 +20,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Создание папки для книг
         if not os.path.isdir("books"):
             os.mkdir("books")
+
+        # Загрузка расширений
+        create_extension()
     
         self.add_book_button.clicked.connect(self.show_window_add_book)
         self.search_book_button.clicked.connect(self.show_window_search_book)
@@ -140,6 +143,11 @@ class MyApp(QMainWindow, Ui_MainWindow):
         loaddata = GetData()
         loaddata.conn = sqlite3.connect("book_db.db") ################ ТУТ НЕ НАДО ТАК
         id_book = loaddata.get_id_book(book_name.lower()) # Вывод (id, )
+        id_extension = loaddata.get_id_formats(book_extension[1:]) # Вывод (id, )
+        # print("id_book: ", id_book)        
+        # print("id_extension: ", id_extension)
+        # print("id_book: ", id_book[0])        
+        # print("id_extension: ", id_extension[0])
 
         # print("path_book:", path_book)
         # print("book_name_for_db: ", book_name_for_db)
@@ -153,18 +161,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
         books_dir = base_dir / "books"
         dest_path = books_dir / f"{book_name_for_db}{book_extension}"
         shutil.copy(path_book, dest_path)
+
+        # Связываем книгу и формат
+        connect_book_extension(id_book[0], id_extension[0])
+
+
+
         
-        # shutil.copy(path_book, os.path.join('/books/', f"{book_name_for_db + book_extension}")
-
-        # if book_extension == ".fb2":
-        #     pass
-
-        # print("Расиширение файла: ", book_extension[1])
-        # print(book_name_for_db)
-        
-        # print("Имя для файла в папке book: ", book_name_for_db)
-
-        #shutil.copy(source_file, destination_folder + f"{}.pdf")
 
 
 
