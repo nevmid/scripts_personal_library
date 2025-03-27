@@ -8,20 +8,80 @@ class GetData:
 
     def get_books(self, filters):
         try:
-            self.conn = sqlite3.connect('database.db')
+            self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
-            query = "SELECT Name_book FROM Books WHERE 1=1"
+            query = """
+            SELECT b.Name_book, GROUP_CONCAT(DISTINCT f.Name_format, ', ') AS formats
+            FROM Books b
+            JOIN Books_Formats bf ON bf.ID_book = b.Id_book
+            JOIN Formats f ON bf.ID_format = f.ID_format
+            WHERE 1=1
+            """
 
             params = []
 
             for key, value in filters.items():
                 if value:
-                    query += f" AND {key} = %s"
-                    params.append(value)
+                    if key == "name":
+                        query += " AND b.Name_book LIKE %s"
+                        params.append(f"%{value}%")
 
+                    elif key == "author":
+                        query += """ AND b.Id_book IN
+                        (SELECT ba.ID_book FROM Books_Authors ba
+                        JOIN Authors a ON ba.ID_author = a.Id_author
+                        WHERE 1=1
+                        """
+                        if value[0] != '':
+                            query += " AND a.Name = %s"
+                            params.append(value[0])
+
+                        if value[1] != '':
+                            query += " AND a.Surname = %s"
+                            params.append(value[1])
+
+                        if value[2] != '':
+                            query += " AND a.Patronymic = %s"
+                            params.append(value[2])
+
+                        if value[3] != '':
+                            query += " AND a.Nickname = %s"
+                            params.append(value[3])
+
+                        query += ")"
+
+                    elif key == "year":
+                        query += " AND b.Year_of_publication = %s"
+                        params.append(value)
+
+                    elif key == "genres":
+                        query += """ AND b.Id_book IN
+                        (SELECT bg.ID_book FROM Books_Genres bg
+                        JOIN Genres g ON g.ID_genre = bg.ID_genre
+                        WHERE g.Name_genre IN ({}))
+                        """.format(",".join(["%s"]*len(value)))
+                        params.append(value)
+
+                    elif key == "tags":
+                        query += """ AND b.Id_book IN
+                        (SELECT bt.ID_book FROM Books_Tags bt
+                        JOIN Tags t ON t.ID_tag = bt.ID_tag
+                        WHERE t.Name_tag IN ({}))
+                        """.format(",".join(["%s"]*len(value)))
+                        params.append(value)
+
+            query += " GROUP BY b.Name_book"
             result = cursor.execute(query, params)
+            books = []
 
-            return result
+            for row in result:
+                book = {
+                    'name': row[0],
+                    'formats': row[1].split(', ') if row[1] else []
+                }
+                books.append(book)
+
+            return books
 
         except Exception as e:
             print(e)
@@ -90,7 +150,7 @@ class GetData:
 
     def get_info_about_books(self, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('database.db')
+            self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             if flag:
                 cursor.execute("SELECT * FROM Books WHERE Name_book = %s", book_name)
@@ -108,7 +168,7 @@ class GetData:
 
     def get_info_about_authors(self, author, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('database.db')
+            self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
 
             if flag:
@@ -143,7 +203,7 @@ class GetData:
 
     def get_info_about_tags(self, tag_name, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('database.db')
+            self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             if flag:
 
@@ -169,7 +229,7 @@ class GetData:
 
     def get_info_about_genres(self, genre_name, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('database.db')
+            self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             if flag:
 
@@ -195,7 +255,7 @@ class GetData:
 
     def get_info_about_formats(self, format_name, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('database.db')
+            self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             if flag:
 
