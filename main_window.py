@@ -527,14 +527,14 @@ class Ui_MainWindow(object):
         self.verticalLayout_5.setObjectName("verticalLayout_5")
         self.horizontalLayout_14 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_14.setObjectName("horizontalLayout_14")
-        self.lineEdit_9 = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
-        self.lineEdit_9.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+        self.window_search_book_name = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
+        self.window_search_book_name.setStyleSheet("background-color: rgb(255, 255, 255);\n"
 "border-radius: 10px;\n"
 "padding: 1px;\n"
 "font: 55 12pt \"MS Shell Dlg 2\";\n"
 "border: 3px solid rgb(99, 47, 255);")
-        self.lineEdit_9.setObjectName("lineEdit_9")
-        self.horizontalLayout_14.addWidget(self.lineEdit_9)
+        self.window_search_book_name.setObjectName("lineEdit_9")
+        self.horizontalLayout_14.addWidget(self.window_search_book_name)
         self.label_3 = QtWidgets.QLabel(self.delete_window_in_stacked_widget)
         self.label_3.setStyleSheet("font: 75 12pt \"MS Shell Dlg 2\";")
         self.label_3.setObjectName("label_3")
@@ -557,14 +557,14 @@ class Ui_MainWindow(object):
         self.verticalLayout_5.addLayout(self.horizontalLayout_15)
         self.horizontalLayout_16 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_16.setObjectName("horizontalLayout_16")
-        self.lineEdit_11 = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
-        self.lineEdit_11.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+        self.window_search_book_year = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
+        self.window_search_book_year.setStyleSheet("background-color: rgb(255, 255, 255);\n"
 "border-radius: 10px;\n"
 "padding: 1px;\n"
 "font: 55 12pt \"MS Shell Dlg 2\";\n"
 "border: 3px solid rgb(99, 47, 255);")
-        self.lineEdit_11.setObjectName("lineEdit_11")
-        self.horizontalLayout_16.addWidget(self.lineEdit_11)
+        self.window_search_book_year.setObjectName("lineEdit_11")
+        self.horizontalLayout_16.addWidget(self.window_search_book_year)
         self.label_14 = QtWidgets.QLabel(self.delete_window_in_stacked_widget)
         self.label_14.setStyleSheet("font: 75 12pt \"MS Shell Dlg 2\";")
         self.label_14.setObjectName("label_14")

@@ -35,6 +35,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Кнопка добавления книги
         self.pushButton_3.clicked.connect(self.add_book)
         self.pushButton_2.clicked.connect(self.open_file_dialog)
+        self.pushButton_5.clicked.connect(self.search_books)
 
 # Функции открытия окон
     def show_window_add_book(self):
@@ -190,6 +191,34 @@ class MyApp(QMainWindow, Ui_MainWindow):
         else:
             setup_database("book_db.db")
             print("Такого файла нет")
+
+#Функция поиска книги
+    def search_books(self):
+
+        if self.window_search_book_name.text() != '':
+            book_name = self.window_search_book_name.text()
+        else:
+            book_name = None
+        author = self.lineEdit_10.text()
+        if self.window_search_book_year.text() != '':
+            year = self.window_search_book_year.text()
+        else:
+            year = None
+
+        filters = {
+
+            "name": book_name,
+            "author": [],
+            "year": year,
+            "genres": [],
+            "tags": []
+
+        }
+        print(filters)
+        loaddata = GetData()
+        result = loaddata.get_books(filters)
+        print(result)
+
 
 
 if __name__ == "__main__":
