@@ -11,7 +11,7 @@ class GetData:
             self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             query = """
-            SELECT b.Name_book, GROUP_CONCAT(DISTINCT f.Name_format, ', ') AS formats
+            SELECT b.Name_book, GROUP_CONCAT(DISTINCT f.Name_format) AS formats
             FROM Books b
             JOIN Books_Formats bf ON bf.ID_book = b.Id_book
             JOIN Formats f ON bf.ID_format = f.ID_format
@@ -23,7 +23,7 @@ class GetData:
             for key, value in filters.items():
                 if value:
                     if key == "name":
-                        query += " AND b.Name_book LIKE %s"
+                        query += " AND b.Name_book LIKE ?"
                         params.append(f"%{value}%")
 
                     elif key == "author":
@@ -33,25 +33,25 @@ class GetData:
                         WHERE 1=1
                         """
                         if value[0] != '':
-                            query += " AND a.Name = %s"
+                            query += " AND a.Name = ?"
                             params.append(value[0])
 
                         if value[1] != '':
-                            query += " AND a.Surname = %s"
+                            query += " AND a.Surname = ?"
                             params.append(value[1])
 
                         if value[2] != '':
-                            query += " AND a.Patronymic = %s"
+                            query += " AND a.Patronymic = ?"
                             params.append(value[2])
 
                         if value[3] != '':
-                            query += " AND a.Nickname = %s"
+                            query += " AND a.Nickname = ?"
                             params.append(value[3])
 
                         query += ")"
 
                     elif key == "year":
-                        query += " AND b.Year_of_publication = %s"
+                        query += " AND b.Year_of_publication = ?"
                         params.append(value)
 
                     elif key == "genres":
@@ -59,7 +59,7 @@ class GetData:
                         (SELECT bg.ID_book FROM Books_Genres bg
                         JOIN Genres g ON g.ID_genre = bg.ID_genre
                         WHERE g.Name_genre IN ({}))
-                        """.format(",".join(["%s"]*len(value)))
+                        """.format(",".join(["?"]*len(value)))
                         params.append(value)
 
                     elif key == "tags":
@@ -67,7 +67,7 @@ class GetData:
                         (SELECT bt.ID_book FROM Books_Tags bt
                         JOIN Tags t ON t.ID_tag = bt.ID_tag
                         WHERE t.Name_tag IN ({}))
-                        """.format(",".join(["%s"]*len(value)))
+                        """.format(",".join(["?"]*len(value)))
                         params.append(value)
 
             query += " GROUP BY b.Name_book"
@@ -77,7 +77,7 @@ class GetData:
             for row in result:
                 book = {
                     'name': row[0],
-                    'formats': row[1].split(', ') if row[1] else []
+                    'formats': [item.strip() for item in row[1].split(',')]
                 }
                 books.append(book)
 
@@ -92,7 +92,7 @@ class GetData:
     def get_id_book(self, book_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT Id_book FROM Books WHERE Name_book = %s", book_name)
+            cursor.execute("SELECT Id_book FROM Books WHERE Name_book = ?", book_name)
             result = cursor.fetchall()
 
             return result
@@ -108,7 +108,7 @@ class GetData:
 
             for key, value in author.items():
                 if value:
-                    query += f" AND {key} = %s"
+                    query += f" AND {key} = ?"
                     params.append(value)
 
             cursor.execute(query, params)
@@ -121,7 +121,7 @@ class GetData:
     def get_id_tag(self, tag_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT ID_tag FROM Tags WHERE Name_tag = %s", tag_name)
+            cursor.execute("SELECT ID_tag FROM Tags WHERE Name_tag = ?", tag_name)
             result = cursor.fetchall()
 
             return result
@@ -131,7 +131,7 @@ class GetData:
     def get_id_genre(self, genre_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT ID_genre FROM Genres WHERE Name_genre = %s", genre_name)
+            cursor.execute("SELECT ID_genre FROM Genres WHERE Name_genre = ?", genre_name)
             result = cursor.fetchall()
 
             return result
@@ -141,7 +141,7 @@ class GetData:
     def get_id_formats(self, format_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT ID_format FROM Formats WHERE Name_format = %s", format_name)
+            cursor.execute("SELECT ID_format FROM Formats WHERE Name_format = ?", format_name)
             result = cursor.fetchall()
 
             return result
@@ -153,7 +153,7 @@ class GetData:
             self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             if flag:
-                cursor.execute("SELECT * FROM Books WHERE Name_book = %s", book_name)
+                cursor.execute("SELECT * FROM Books WHERE Name_book = ?", book_name)
             else:
                 cursor.execute("SELECT * FROM Books")
             result = cursor.fetchall()
@@ -176,7 +176,7 @@ class GetData:
                 id_book = self.get_id_book(book_name)
                 id_author = self.get_id_author(author)
 
-                cursor.execute("SELECT ID FROM Books_Authors WHERE ID_book = %s AND ID_author = %s",
+                cursor.execute("SELECT ID FROM Books_Authors WHERE ID_book = ? AND ID_author = ?",
                                [id_book, id_author])
 
             else:
@@ -186,7 +186,7 @@ class GetData:
 
                 for key, value in author.items():
                     if value:
-                        query += f" AND {key} = %s"
+                        query += f" AND {key} = ?"
                         params.append(value)
 
                 cursor.execute(query, params)
@@ -210,11 +210,11 @@ class GetData:
                 id_book = self.get_id_book(book_name)
                 id_tag = self.get_id_tag(tag_name)
 
-                cursor.execute("SELECT ID FROM Books_Tags WHERE ID_book = %s AND ID_tag = %s",
+                cursor.execute("SELECT ID FROM Books_Tags WHERE ID_book = ? AND ID_tag = ?",
                                [id_book, id_tag])
 
             else:
-                query = "SELECT * FROM Tags WHERE Name_tag = %s"
+                query = "SELECT * FROM Tags WHERE Name_tag = ?"
                 cursor.execute(query, tag_name)
 
             result = cursor.fetchall()
@@ -236,11 +236,11 @@ class GetData:
                 id_book = self.get_id_book(book_name)
                 id_genre = self.get_id_genre(genre_name)
 
-                cursor.execute("SELECT ID FROM Books_Genres WHERE ID_book = %s AND ID_genre = %s",
+                cursor.execute("SELECT ID FROM Books_Genres WHERE ID_book = ? AND ID_genre = ?",
                                [id_book, id_genre])
 
             else:
-                query = "SELECT * FROM Genres WHERE Name_genre = %s"
+                query = "SELECT * FROM Genres WHERE Name_genre = ?"
                 cursor.execute(query, genre_name)
 
             result = cursor.fetchall()
@@ -262,11 +262,11 @@ class GetData:
                 id_book = self.get_id_book(book_name)
                 id_format = self.get_id_formats(format_name)
 
-                cursor.execute("SELECT ID FROM Books_Formats WHERE ID_book = %s AND ID_format = %s",
+                cursor.execute("SELECT ID FROM Books_Formats WHERE ID_book = ? AND ID_format = ?",
                                [id_book, id_format])
 
             else:
-                query = "SELECT * FROM Formats WHERE Name_format = %s"
+                query = "SELECT * FROM Formats WHERE Name_format = ?"
                 cursor.execute(query, format_name)
 
             result = cursor.fetchall()
