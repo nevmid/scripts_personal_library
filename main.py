@@ -181,34 +181,38 @@ class MyApp(QMainWindow, Ui_MainWindow):
             setup_database("book_db.db")
             print("Такого файла нет")
 
-
-#-------------------------------#
 #   Функция поиска книги
     def search_books(self):
         
-        book_name = self.window_search_name_book.text()
-        author_firstname = self.window_search_first_name.text()
-        author_lastname = self.window_search_last_name.text()
-        author_middlename = self.window_search_middle_name.text()
-        author_nikname = self.window_search_nikname.text()
-        year = self.window_search_year.text()
-
-        # Пока-что поиск только по названию книги
-        if book_name == "":
-            QMessageBox.information(self, 'Сообщение', 'Введите нвазние книги')
-            return
-
-        # Формируем фильтры
-        filters = {}
-
-        if book_name != "":
-            filters["name"] = book_name.lower()
+        if self.window_search_name_book.text() != '':
+            book_name = self.window_search_name_book.text()
         else:
-            pass
+            book_name = None
+
+        author = []
+
+        author.append(self.window_search_last_name.text())
+        author.append(self.window_search_first_name.text())
+        author.append(self.window_search_middle_name.text())
+        author.append(self.window_search_nikname.text())
+
+        if self.window_search_year.text() != '':
+            year = self.window_search_year.text()
+        else:
+            year = None
+
+        filters = {
+
+            "name": book_name,
+            "author": author,
+            "year": year,
+            "genres": [],
+            "tags": []
+
+        }
 
         loaddata = GetData()
         books = loaddata.get_books(filters)
-        QMessageBox.information(self, 'Сообщение', f'Книги: {books}')
 
         self.window_search_name_book.clear()
         self.window_search_first_name.clear()
@@ -221,17 +225,15 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         self.load_books_to_list_widgets(books)
 
-        # Открываем главное окно
-        self.stackedWidget.setCurrentIndex(0) ##### Поменять на вызов функции
+        self.stackedWidget.setCurrentIndex(0)  ##### Поменять на вызов функции
 
-    # Загрузка элементов в listWidgets
-    def load_books_to_list_widgets(self, dict_of_books={}):
+    def load_books_to_list_widgets(self, dict_of_books):
 
-        for el in dict_of_books: # Проходимся по всем книгам
-            for format in el["formats"]: # Проходимся по форматам книги
+        for el in dict_of_books:  # Проходимся по всем книгам
+            for format in el["formats"]:  # Проходимся по форматам книги
                 item = QListWidgetItem()
                 item_widget = QWidget()
-                line_text = QLabel(f"{el["name"].capitalize()}")
+                line_text = QLabel(f'{el["name"].capitalize()}')
                 line_empty = QLabel()
                 line_format = QLabel(f"{format}")
                 line_push_button = QPushButton("Открыть")
@@ -242,7 +244,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     else:
                         file_name += ch
                 line_push_button.setObjectName(str(f"{file_name}_{format}.{format}"))
-                line_push_button.clicked.connect(self.clicked)
+                line_push_button.clicked.connect(self.clickedLinePB)
                 item_layout = QHBoxLayout()
                 item_layout.addWidget(line_text)
                 item_layout.addWidget(line_empty)
@@ -252,17 +254,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 item.setSizeHint(item_widget.sizeHint())
                 self.listWidget.addItem(item)
                 self.listWidget.setItemWidget(item, item_widget)
-    
-    def clicked(self):
-        sender = self.sender()
-        push_button = self.findChild(QPushButton, sender.objectName())
 
-        # Получаем путь до текущей директории
-        base_dir = Path(__file__).parent.resolve()
-        books_dir = base_dir / "books"
-
-        # Запускаем файл
-        os.startfile(books_dir / f"{push_button.objectName()}" )
+    def clickedLinePB(self):
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
