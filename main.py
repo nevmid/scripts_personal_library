@@ -265,7 +265,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
         os.startfile(books_dir / f"{push_button.objectName()}" )
 
 if __name__ == "__main__":
-
     app = QApplication(sys.argv)
     window = MyApp()
     window.showMaximized()
