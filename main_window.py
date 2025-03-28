@@ -538,24 +538,15 @@ class Ui_MainWindow(object):
         self.horizontalLayout_38.addItem(spacerItem32)
         self.horizontalLayout_14 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_14.setObjectName("horizontalLayout_14")
-
         self.window_search_name_book = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
         self.window_search_name_book.setMinimumSize(QtCore.QSize(350, 0))
-        self.window_search_name_book.setStyleSheet("background-color: rgb(255, 255, 255);\n")
-
-        self.window_search_book_name = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
-        self.window_search_book_name.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+        self.window_search_name_book.setStyleSheet("background-color: rgb(255, 255, 255);\n"
 "border-radius: 10px;\n"
 "padding: 1px;\n"
 "font: 55 12pt \"MS Shell Dlg 2\";\n"
 "border: 3px solid rgb(99, 47, 255);")
-
         self.window_search_name_book.setObjectName("window_search_name_book")
         self.horizontalLayout_14.addWidget(self.window_search_name_book)
-
-        self.window_search_book_name.setObjectName("lineEdit_9")
-        self.horizontalLayout_14.addWidget(self.window_search_book_name)
-
         self.label_3 = QtWidgets.QLabel(self.delete_window_in_stacked_widget)
         self.label_3.setStyleSheet("font: 75 12pt \"MS Shell Dlg 2\";")
         self.label_3.setObjectName("label_3")
@@ -605,7 +596,6 @@ class Ui_MainWindow(object):
         self.label_13 = QtWidgets.QLabel(self.delete_window_in_stacked_widget)
         self.label_13.setStyleSheet("font: 75 12pt \"MS Shell Dlg 2\";")
         self.label_13.setObjectName("label_13")
-
         self.horizontalLayout_37.addWidget(self.label_13)
         self.gridLayout_8.addLayout(self.horizontalLayout_37, 1, 0, 1, 1)
         self.horizontalLayout_39 = QtWidgets.QHBoxLayout()
@@ -616,20 +606,11 @@ class Ui_MainWindow(object):
         self.horizontalLayout_15.setObjectName("horizontalLayout_15")
         self.window_search_nikname = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
         self.window_search_nikname.setMinimumSize(QtCore.QSize(340, 0))
-        self.window_search_nikname.setStyleSheet("background-color: rgb(255, 255, 255);\n")
-
-        self.horizontalLayout_15.addWidget(self.label_13)
-        self.verticalLayout_5.addLayout(self.horizontalLayout_15)
-        self.horizontalLayout_16 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_16.setObjectName("horizontalLayout_16")
-        self.window_search_book_year = QtWidgets.QLineEdit(self.delete_window_in_stacked_widget)
-        self.window_search_book_year.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-
+        self.window_search_nikname.setStyleSheet("background-color: rgb(255, 255, 255);\n"
 "border-radius: 10px;\n"
 "padding: 1px;\n"
 "font: 55 12pt \"MS Shell Dlg 2\";\n"
 "border: 3px solid rgb(99, 47, 255);")
-
         self.window_search_nikname.setObjectName("window_search_nikname")
         self.horizontalLayout_15.addWidget(self.window_search_nikname)
         self.label_29 = QtWidgets.QLabel(self.delete_window_in_stacked_widget)
@@ -655,10 +636,6 @@ class Ui_MainWindow(object):
 "border: 3px solid rgb(99, 47, 255);")
         self.window_search_year.setObjectName("window_search_year")
         self.horizontalLayout_16.addWidget(self.window_search_year)
-
-        self.window_search_book_year.setObjectName("lineEdit_11")
-        self.horizontalLayout_16.addWidget(self.window_search_book_year)
-
         self.label_14 = QtWidgets.QLabel(self.delete_window_in_stacked_widget)
         self.label_14.setStyleSheet("font: 75 12pt \"MS Shell Dlg 2\";")
         self.label_14.setObjectName("label_14")

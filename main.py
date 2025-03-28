@@ -198,20 +198,29 @@ class MyApp(QMainWindow, Ui_MainWindow):
 #Функция поиска книги
     def search_books(self):
 
-        if self.window_search_book_name.text() != '':
-            book_name = self.window_search_book_name.text()
+
+        print(self.window_search_name_book.text())
+        if self.window_search_name_book.text() != '':
+            book_name = self.window_search_name_book.text()
         else:
             book_name = None
-        author = self.lineEdit_10.text()
-        if self.window_search_book_year.text() != '':
-            year = self.window_search_book_year.text()
+
+        author = []
+
+        author.append(self.window_search_last_name.text())
+        author.append(self.window_search_first_name.text())
+        author.append(self.window_search_middle_name.text())
+        author.append(self.window_search_nikname.text())
+
+        if self.window_search_year.text() != '':
+            year = self.window_search_year.text()
         else:
             year = None
 
         filters = {
 
             "name": book_name,
-            "author": [],
+            "author": author,
             "year": year,
             "genres": [],
             "tags": []
