@@ -157,7 +157,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         shutil.copy(path_book, dest_path)
 
         # Связываем книгу и формат
-        connect_book_extension(id_book[0], id_extension[0])
+        connect_book_extension(id_book[0][0], id_extension[0][0])
 
 # Функция получения пути до файла
     def open_file_dialog(self):
