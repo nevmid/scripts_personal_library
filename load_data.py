@@ -92,7 +92,7 @@ class GetData:
     def get_id_book(self, book_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT Id_book FROM Books WHERE Name_book = ?", book_name)
+            cursor.execute("SELECT Id_book FROM Books WHERE Name_book = ?", (book_name, ))
             result = cursor.fetchall()
 
             return result
@@ -121,7 +121,7 @@ class GetData:
     def get_id_tag(self, tag_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT ID_tag FROM Tags WHERE Name_tag = ?", tag_name)
+            cursor.execute("SELECT ID_tag FROM Tags WHERE Name_tag = ?", (tag_name, ))
             result = cursor.fetchall()
 
             return result
@@ -131,7 +131,7 @@ class GetData:
     def get_id_genre(self, genre_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT ID_genre FROM Genres WHERE Name_genre = ?", genre_name)
+            cursor.execute("SELECT ID_genre FROM Genres WHERE Name_genre = ?", (genre_name, ))
             result = cursor.fetchall()
 
             return result
@@ -141,7 +141,7 @@ class GetData:
     def get_id_formats(self, format_name):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT ID_format FROM Formats WHERE Name_format = ?", format_name)
+            cursor.execute("SELECT ID_format FROM Formats WHERE Name_format = ?", (format_name, ))
             result = cursor.fetchall()
 
             return result
@@ -153,7 +153,7 @@ class GetData:
             self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             if flag:
-                cursor.execute("SELECT * FROM Books WHERE Name_book = ?", book_name)
+                cursor.execute("SELECT * FROM Books WHERE Name_book = ?", (book_name, ))
             else:
                 cursor.execute("SELECT * FROM Books")
             result = cursor.fetchall()
