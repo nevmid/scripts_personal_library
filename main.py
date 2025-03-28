@@ -256,7 +256,15 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 self.listWidget.setItemWidget(item, item_widget)
 
     def clickedLinePB(self):
-        pass
+        sender = self.sender()
+        push_button = self.findChild(QPushButton, sender.objectName())
+
+        # Получаем путь до текущей директории
+        base_dir = Path(__file__).parent.resolve()
+        books_dir = base_dir / "books"
+
+        # Запускаем файл
+        os.startfile(books_dir / f"{push_button.objectName()}" )
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
