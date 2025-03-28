@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
 from create_db import setup_database
 from main_window import Ui_MainWindow
 from save import add_book, create_extension, connect_book_extension
@@ -41,7 +41,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.pushButton_2.clicked.connect(self.open_file_dialog)
         self.pushButton_5.clicked.connect(self.search_books)
 
-    # Функции открытия окон
+        # Кнопка поиска книги
+        self.pushButton_5.clicked.connect(self.search_books)
+
+
     def show_window_add_book(self):
         # print("Add book")
         self.stackedWidget.setCurrentIndex(1)
@@ -61,7 +64,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def show_main_window(self):
         self.stackedWidget.setCurrentIndex(0)
 
-    # Функция добавления книги
+
+#-------------------------------#
+# Функция добавления книги
     def add_book(self):
 
         # Получение данных о книге
@@ -158,16 +163,21 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # base_dir = Path(__file__).parent.resolve()
         # print("base dir:", base_dir)
 
+        loaddata.conn = sqlite3.connect("book_db.db") ################ ТУТ НЕ НАДО ТАК
+        id_book = loaddata.get_id_book(book_name.lower()) # Вывод (id, )
+        id_extension = loaddata.get_id_formats(book_extension[1:]) # Вывод (id, )
+
         # Копируем файл в папку books
         base_dir = Path(__file__).parent.resolve()
         books_dir = base_dir / "books"
-        dest_path = books_dir / f"{book_name_for_db}{book_extension}"
+        dest_path = books_dir / f"{book_name_for_db.lower()}{book_extension}"
         shutil.copy(path_book, dest_path)
 
         # Связываем книгу и формат
         connect_book_extension(id_book[0], id_extension[0])
 
-    # Функция получения пути до файла
+
+# Функция получения пути до файла
     def open_file_dialog(self):
         # Открываем диалоговое окно выбора файла
         file_name, _ = QFileDialog.getOpenFileName(
@@ -193,6 +203,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def search_books(self):
 
         print(self.window_search_name_book.text())
+#   Функция поиска книги
+    def search_books(self):
+
         if self.window_search_name_book.text() != '':
             book_name = self.window_search_name_book.text()
         else:
@@ -221,9 +234,51 @@ class MyApp(QMainWindow, Ui_MainWindow):
         }
 
         loaddata = GetData()
-        result = loaddata.get_books(filters)
+        books = loaddata.get_books(filters)
 
+        self.window_search_name_book.clear()
+        self.window_search_first_name.clear()
+        self.window_search_last_name.clear()
+        self.window_search_middle_name.clear()
+        self.window_search_nikname.clear()
+        self.window_search_year.clear()
 
+        self.listWidget.clear()
+
+        self.load_books_to_list_widgets(books)
+
+        self.stackedWidget.setCurrentIndex(0)  ##### Поменять на вызов функции
+
+    def load_books_to_list_widgets(self, dict_of_books):
+
+        for el in dict_of_books:  # Проходимся по всем книгам
+            for format in el["formats"]:  # Проходимся по форматам книги
+                item = QListWidgetItem()
+                item_widget = QWidget()
+                line_text = QLabel(f'{el["name"].capitalize()}')
+                line_empty = QLabel()
+                line_format = QLabel(f"{format}")
+                line_push_button = QPushButton("Открыть")
+                file_name = ""
+                for ch in el["name"]:
+                    if ch == " ":
+                        file_name += "_"
+                    else:
+                        file_name += ch
+                line_push_button.setObjectName(str(f"{file_name}_{format}.{format}"))
+                line_push_button.clicked.connect(self.clickedLinePB)
+                item_layout = QHBoxLayout()
+                item_layout.addWidget(line_text)
+                item_layout.addWidget(line_empty)
+                item_layout.addWidget(line_format)
+                item_layout.addWidget(line_push_button)
+                item_widget.setLayout(item_layout)
+                item.setSizeHint(item_widget.sizeHint())
+                self.listWidget.addItem(item)
+                self.listWidget.setItemWidget(item, item_widget)
+
+    def clickedLinePB(self):
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
