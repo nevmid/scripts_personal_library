@@ -39,7 +39,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Кнопка добавления книги
         self.pushButton_3.clicked.connect(self.add_book)
         self.pushButton_2.clicked.connect(self.open_file_dialog)
-        self.pushButton_5.clicked.connect(self.search_books)
 
         # Кнопка поиска книги
         self.pushButton_5.clicked.connect(self.search_books)
@@ -199,11 +198,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             setup_database("book_db.db")
             print("Такого файла нет")
 
-    # Функция поиска книги
-    def search_books(self):
 
-        print(self.window_search_name_book.text())
-#   Функция поиска книги
     def search_books(self):
 
         if self.window_search_name_book.text() != '':
