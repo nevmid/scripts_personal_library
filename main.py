@@ -6,8 +6,9 @@ from main_window import Ui_MainWindow
 from save import add_book, create_extension, connect_book_extension
 from load_data import GetData
 import shutil
-from pathlib import Path  
-import sqlite3 ##############
+from pathlib import Path
+import sqlite3  ##############
+
 
 class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -23,12 +24,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Загрузка расширений
         create_extension()
-    
+
         self.add_book_button.clicked.connect(self.show_window_add_book)
         self.search_book_button.clicked.connect(self.show_window_search_book)
         self.add_category_button.clicked.connect(self.show_window_add_category)
         self.delete_category_button.clicked.connect(self.show_window_delete_category)
-        
+
         self.back_to_main_window_add_book.clicked.connect(self.show_main_window)
         self.back_to_main_window_edit_book.clicked.connect(self.show_main_window)
         self.back_to_main_window_search_bok.clicked.connect(self.show_main_window)
@@ -40,36 +41,36 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.pushButton_2.clicked.connect(self.open_file_dialog)
         self.pushButton_5.clicked.connect(self.search_books)
 
-# Функции открытия окон
+    # Функции открытия окон
     def show_window_add_book(self):
         # print("Add book")
         self.stackedWidget.setCurrentIndex(1)
-    
+
     def show_window_search_book(self):
         # print("Search book")
         self.stackedWidget.setCurrentIndex(3)
-    
+
     def show_window_add_category(self):
         # print("Add category")
         self.stackedWidget.setCurrentIndex(5)
-    
+
     def show_window_delete_category(self):
         # print("Delete category")
         self.stackedWidget.setCurrentIndex(4)
-    
+
     def show_main_window(self):
         self.stackedWidget.setCurrentIndex(0)
 
-# Функция добавления книги
+    # Функция добавления книги
     def add_book(self):
-        
+
         # Получение данных о книге
         book_name = self.lineEdit_2.text()
         year = self.lineEdit_3.text()
         author_firstname = self.window_add_book_firstname.text()
         author_lastname = self.window_add_book_lastname.text()
         author_middlename = self.window_add_book_middlename.text()
-        author_nikname= self.window_add_book_nikname.text()        
+        author_nikname = self.window_add_book_nikname.text()
         # author = self.lineEdit_4.text()
         path_book = self.window_add_file_path.text()
 
@@ -91,10 +92,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 book_name_for_db += "_"
             elif ch != " ":
                 book_name_for_db += ch
-        
+
         # Получение расширения и пути до файла
         book_path = os.path.splitext(path_book)[0]
-        book_extension = os.path.splitext(path_book)[1] 
+        book_extension = os.path.splitext(path_book)[1]
 
         # Проверка расширения файла для книг
         if book_extension != '.fb2' and book_extension != '.pdf' and book_extension != '.txt':
@@ -133,7 +134,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         book_name_for_db += "_" + book_extension[1:]
 
         # Добавление книги
-        if add_book( book_name.lower(), int(year)):
+        if add_book(book_name.lower(), int(year)):
             QMessageBox.information(self, 'Сообщение', 'Книга добавлена')
         else:
             QMessageBox.information(self, 'Сообщение', 'Книга не добавлена')
@@ -142,12 +143,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Получение id добавленной книги
         loaddata = GetData()
-        loaddata.conn = sqlite3.connect("book_db.db") ################ ТУТ НЕ НАДО ТАК
-        id_book = loaddata.get_id_book(book_name.lower()) # Вывод (id, )
-        id_extension = loaddata.get_id_formats(book_extension[1:]) # Вывод (id, )
-        # print("id_book: ", id_book)        
+        loaddata.conn = sqlite3.connect("book_db.db")  ################ ТУТ НЕ НАДО ТАК
+        id_book = loaddata.get_id_book(book_name.lower())  # Вывод (id, )
+        id_extension = loaddata.get_id_formats(book_extension[1:])  # Вывод (id, )
+        # print("id_book: ", id_book)
         # print("id_extension: ", id_extension)
-        # print("id_book: ", id_book[0])        
+        # print("id_book: ", id_book[0])
         # print("id_extension: ", id_extension[0])
 
         # print("path_book:", path_book)
@@ -166,28 +167,21 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Связываем книгу и формат
         connect_book_extension(id_book[0], id_extension[0])
 
-
-
-        
-
-
-
-
-# Функция получения пути до файла
+    # Функция получения пути до файла
     def open_file_dialog(self):
         # Открываем диалоговое окно выбора файла
         file_name, _ = QFileDialog.getOpenFileName(
-            self,                  # Родительское окно
-            "Выберите файл",       # Заголовок окна
-            "",                    # Начальная директория
+            self,  # Родительское окно
+            "Выберите файл",  # Заголовок окна
+            "",  # Начальная директория
             "All Files (*);;Text Files (*.txt);;Python Files (*.py)"  # Фильтры файлов
         )
-        
+
         # Если файл выбран (не нажата отмена)
         if file_name:
             self.window_add_file_path.setText(f"{file_name}")
 
-# Функция проерки существования файла БД
+    # Функция проерки существования файла БД
     def create_db(self):
         if os.path.exists("book_db.db"):
             print("Такой файл есть")
@@ -195,37 +189,43 @@ class MyApp(QMainWindow, Ui_MainWindow):
             setup_database("book_db.db")
             print("Такого файла нет")
 
-#Функция поиска книги
+    # Функция поиска книги
     def search_books(self):
 
-        if self.window_search_book_name.text() != '':
-            book_name = self.window_search_book_name.text()
+        print(self.window_search_name_book.text())
+        if self.window_search_name_book.text() != '':
+            book_name = self.window_search_name_book.text()
         else:
             book_name = None
-        author = self.lineEdit_10.text()
-        if self.window_search_book_year.text() != '':
-            year = self.window_search_book_year.text()
+
+        author = []
+
+        author.append(self.window_search_last_name.text())
+        author.append(self.window_search_first_name.text())
+        author.append(self.window_search_middle_name.text())
+        author.append(self.window_search_nikname.text())
+
+        if self.window_search_year.text() != '':
+            year = self.window_search_year.text()
         else:
             year = None
 
         filters = {
 
             "name": book_name,
-            "author": [],
+            "author": author,
             "year": year,
             "genres": [],
             "tags": []
 
         }
-        print(filters)
+
         loaddata = GetData()
         result = loaddata.get_books(filters)
-        print(result)
 
 
 
 if __name__ == "__main__":
-
     app = QApplication(sys.argv)
     window = MyApp()
     window.showMaximized()
