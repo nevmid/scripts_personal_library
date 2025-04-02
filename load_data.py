@@ -148,17 +148,64 @@ class GetData:
         except Exception as e:
             print(e)
 
-    def get_info_about_books(self, flag, book_name=None):
+    def get_info_about_books(self, flag=False, book_name=None):
         try:
             self.conn = sqlite3.connect('book_db.db')
             cursor = self.conn.cursor()
             if flag:
-                cursor.execute("SELECT * FROM Books WHERE Name_book = ?", (book_name, ))
+                id_book = self.get_id_book(book_name)
+                cursor.execute("""SELECT 
+                                        b.Id_book, b.Name_book, b.Year_of_publication, a.Id_author, a.Name,
+                                        a.Surname, a.Patronymic, a.Nickname,
+                                        GROUP_CONCAT(DISTINCT g.Name_genre),
+                                        GROUP_CONCAT(DISTINCT t.Name_tag),
+                                        GROUP_CONCAT(DISTINCT f.Name_format)
+                                        FROM Books b
+                                    JOIN Books_Authors ba ON b.Id_book = ba.ID_book
+                                    JOIN Authors a ON ba.ID_author = a.Id_author
+                                    LEFT JOIN Books_Genres bg ON b.Id_book = bg.ID_book
+                                    LEFT JOIN Genres g ON bg.ID_genre = g.ID_genre
+                                    LEFT JOIN Books_Tags bt ON b.Id_book = bt.ID_book
+                                    LEFT JOIN Tags t ON bt.ID_tag = t.ID_tag
+                                    LEFT JOIN Books_Formats bf ON b.Id_book = bf.ID_book
+                                    LEFT JOIN Formats f ON f.ID_format = bf.ID_format
+                                    WHERE 
+                                        b.Id_book = ?
+                                    GROUP BY b.Id_book, b.Name_book, b.Year_of_publication, a.Id_author, a.Name, 
+                                        a.Surname, a.Patronymic, a.Nickname""", id_book[0])
+                result = cursor.fetchall()
+                info = []
+
+                for row in result:
+                    if row[8] is None:
+                        genres = None
+                    else:
+                        genres = [item.strip() for item in row[8].split(',')]
+                    if row[9] is None:
+                        tags = None
+                    else:
+                        tags = [item.strip() for item in row[9].split(',')]
+
+                    d = {
+
+                        "id_book": row[0],
+                        "name_book": row[1],
+                        "year": row[2],
+                        "id_author": row[3],
+                        "firstname": row[4],
+                        "lastname": row[5],
+                        "middlename": row[6],
+                        "nickname": row[7],
+                        "genres": genres,
+                        "tags": tags,
+                        "formats": [item.strip() for item in row[10].split(',')]
+
+                    }
+                    info.append(d)
             else:
                 cursor.execute("SELECT * FROM Books")
-            result = cursor.fetchall()
-
-            return result
+                info = cursor.fetchall()
+            return info
 
         except Exception as e:
             print(e)
