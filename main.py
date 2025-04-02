@@ -161,6 +161,15 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Связываем книгу и формат
         connect_book_extension(id_book[0], id_extension[0])
 
+        # Очищение полей ввода
+        self.window_add_book_name_book.clear()
+        self.window_add_book_year.clear()
+        self.window_add_book_firstname.clear()
+        self.window_add_book_lastname.clear()
+        self.window_add_book_middlename.clear()
+        self.window_add_book_nickname.clear()
+        self.window_add_file_path.clear()
+
 # Функция получения пути до файла
     def open_file_dialog(self):
         # Открываем диалоговое окно выбора файла
