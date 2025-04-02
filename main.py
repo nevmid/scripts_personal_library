@@ -1,5 +1,7 @@
 import sys
 import os
+
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
 from create_db import setup_database
 from main_window import Ui_MainWindow
@@ -31,16 +33,16 @@ class MyApp(QMainWindow, Ui_MainWindow):
         
         self.back_to_main_window_add_book.clicked.connect(self.show_main_window)
         self.back_to_main_window_edit_book.clicked.connect(self.show_main_window)
-        self.back_to_main_window_search_bok.clicked.connect(self.show_main_window)
-        self.back_to_main_window_delete_category.clicked.connect(self.show_main_window)
-        self.back_to_main_window_add_category.clicked.connect(self.show_main_window)
+        self.back_to_main_window_search_book.clicked.connect(self.show_main_window)
+        self.back_to_main_window_delete_tag.clicked.connect(self.show_main_window)
+        self.back_to_main_window_add_tag.clicked.connect(self.show_main_window)
 
         # Кнопка добавления книги
-        self.pushButton_3.clicked.connect(self.add_book)
-        self.pushButton_2.clicked.connect(self.open_file_dialog)
+        self.window_add_book_btn_add.clicked.connect(self.add_book)
+        self.window_add_book_btn_choose.clicked.connect(self.open_file_dialog)
 
         # Кнопка поиска книги
-        self.pushButton_5.clicked.connect(self.search_books)
+        self.window_search_book_btn_search.clicked.connect(self.search_books)
 
 
 # Функции открытия окон
@@ -68,12 +70,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def add_book(self):
         
         # Получение данных о книге
-        book_name = self.lineEdit_2.text()
-        year = self.lineEdit_3.text()
+        book_name = self.window_add_book_name_book.text()
+        year = self.window_add_book_year.text()
         author_firstname = self.window_add_book_firstname.text()
         author_lastname = self.window_add_book_lastname.text()
         author_middlename = self.window_add_book_middlename.text()
-        author_nikname= self.window_add_book_nikname.text()        
+        author_nickname= self.window_add_book_nickname.text()
         # author = self.lineEdit_4.text()
         path_book = self.window_add_file_path.text()
 
@@ -157,18 +159,16 @@ class MyApp(QMainWindow, Ui_MainWindow):
         shutil.copy(path_book, dest_path)
 
         # Связываем книгу и формат
-        connect_book_extension(id_book[0][0], id_extension[0][0])
+        connect_book_extension(id_book[0], id_extension[0])
 
         # Очищение полей ввода
-        self.lineEdit_2.clear()
-        self.lineEdit_3.clear()
+        self.window_add_book_name_book.clear()
+        self.window_add_book_year.clear()
         self.window_add_book_firstname.clear()
         self.window_add_book_lastname.clear()
         self.window_add_book_middlename.clear()
-        self.window_add_book_nikname.clear()     
+        self.window_add_book_nickname.clear()
         self.window_add_file_path.clear()
-
-
 
 # Функция получения пути до файла
     def open_file_dialog(self):
@@ -195,20 +195,20 @@ class MyApp(QMainWindow, Ui_MainWindow):
 #   Функция поиска книги
     def search_books(self):
         
-        if self.window_search_name_book.text() != '':
-            book_name = self.window_search_name_book.text()
+        if self.window_search_book_name_book.text() != '':
+            book_name = self.window_search_book_name_book.text()
         else:
             book_name = None
 
         author = []
 
-        author.append(self.window_search_last_name.text())
-        author.append(self.window_search_first_name.text())
-        author.append(self.window_search_middle_name.text())
-        author.append(self.window_search_nikname.text())
+        author.append(self.window_search_book_firstname.text())
+        author.append(self.window_search_book_lastname.text())
+        author.append(self.window_search_book_middlename.text())
+        author.append(self.window_search_book_nickname.text())
 
-        if self.window_search_year.text() != '':
-            year = self.window_search_year.text()
+        if self.window_search_book_year.text() != '':
+            year = self.window_search_book_year.text()
         else:
             year = None
 
@@ -225,12 +225,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
         loaddata = GetData()
         books = loaddata.get_books(filters)
 
-        self.window_search_name_book.clear()
-        self.window_search_first_name.clear()
-        self.window_search_last_name.clear()
-        self.window_search_middle_name.clear()
-        self.window_search_nikname.clear()
-        self.window_search_year.clear()
+        self.window_search_book_name_book.clear()
+        self.window_search_book_firstname.clear()
+        self.window_search_book_lastname.clear()
+        self.window_search_book_middlename.clear()
+        self.window_search_book_nickname.clear()
+        self.window_search_book_year.clear()
 
         self.listWidget.clear()
 
@@ -244,23 +244,42 @@ class MyApp(QMainWindow, Ui_MainWindow):
             for format in el["formats"]:  # Проходимся по форматам книги
                 item = QListWidgetItem()
                 item_widget = QWidget()
+                item_widget.setStyleSheet("color: black; border: 0px; font: 20px")
                 line_text = QLabel(f'{el["name"].capitalize()}')
                 line_empty = QLabel()
                 line_format = QLabel(f"{format}")
-                line_push_button = QPushButton("Открыть")
+                open_btn = QPushButton("От")
+                open_btn.setToolTip("Открыть")
+                open_btn.setCursor(Qt.PointingHandCursor)
+                open_btn.setMaximumSize(50, 50)
+                copy_btn = QPushButton("Ск")
+                copy_btn.setToolTip("Скопировать")
+                copy_btn.setMaximumSize(50, 50)
+                copy_btn.setCursor(Qt.PointingHandCursor)
+                edit_btn = QPushButton("Ред")
+                edit_btn.setToolTip("Редактировать")
+                edit_btn.setMaximumSize(50, 50)
+                edit_btn.setCursor(Qt.PointingHandCursor)
+                delete_btn = QPushButton("Уд")
+                delete_btn.setToolTip("Удалить")
+                delete_btn.setMaximumSize(50, 50)
+                delete_btn.setCursor(Qt.PointingHandCursor)
                 file_name = ""
                 for ch in el["name"]:
                     if ch == " ":
                         file_name += "_"
                     else:
                         file_name += ch
-                line_push_button.setObjectName(str(f"{file_name}_{format}.{format}"))
-                line_push_button.clicked.connect(self.clickedLinePB)
+                open_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
+                open_btn.clicked.connect(self.clickedLinePB)
                 item_layout = QHBoxLayout()
                 item_layout.addWidget(line_text)
                 item_layout.addWidget(line_empty)
                 item_layout.addWidget(line_format)
-                item_layout.addWidget(line_push_button)
+                item_layout.addWidget(open_btn)
+                item_layout.addWidget(copy_btn)
+                item_layout.addWidget(edit_btn)
+                item_layout.addWidget(delete_btn)
                 item_widget.setLayout(item_layout)
                 item.setSizeHint(item_widget.sizeHint())
                 self.listWidget.addItem(item)
