@@ -50,7 +50,7 @@ def connect_book_extension(id_book, id_extension):
     try:
         con = sqlite3.connect("book_db.db")
         cursor = con.cursor()
-        cursor.execute("""INSERT INTO Books_Formats (ID_book, ID_format) VALUES (?, ?);""", (id_book, id_extension))
+        cursor.execute("""INSERT INTO Books_Formats (ID_book, ID_format) VALUES (?, ?);""", (int(id_book), int(id_extension)))
         con.commit()
         con.close()
         return True

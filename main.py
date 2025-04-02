@@ -159,7 +159,16 @@ class MyApp(QMainWindow, Ui_MainWindow):
         shutil.copy(path_book, dest_path)
 
         # Связываем книгу и формат
-        connect_book_extension(id_book[0], id_extension[0])
+        connect_book_extension(id_book[0][0], id_extension[0][0])
+
+        # Очищение полей ввода
+        self.window_add_book_name_book.clear()
+        self.window_add_book_year.clear()
+        self.window_add_book_firstname.clear()
+        self.window_add_book_lastname.clear()
+        self.window_add_book_middlename.clear()
+        self.window_add_book_nickname.clear()
+        self.window_add_file_path.clear()
 
         # Очищение полей ввода
         self.window_add_book_name_book.clear()
