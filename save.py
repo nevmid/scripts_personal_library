@@ -14,6 +14,9 @@ class DatabaseManager:
  
      def add_book(self, book_name, year):
          """Добавляет книгу в таблицу Books и возвращает ID"""
+         # Сохранение имени книги в БД приводим у нижнему регистру 
+         book_name = book_name.lower()
+         print(book_name)
          try:
              with self._get_connection() as conn:
                  cursor = conn.cursor()
@@ -27,13 +30,24 @@ class DatabaseManager:
     
      def delete_book(self, name_book):
          """Удаление книги из БД"""
+      
+         # Так как в папке books имена файлов храняться с знаками _
+         # то вместо них ставим пробелы
+         # print("old: ", name_book)
+         correct_name_book = "" 
+         for ch in name_book:
+            if ch != "_":
+                correct_name_book += ch
+            else:
+                correct_name_book += " "
+         # print("new: ", correct_name_book)
          try:
              with self._get_connection() as conn:
                  cursor = conn.cursor()
                  conn.execute("PRAGMA foreign_keys = ON") #//////////////////////////////////////////////////
                  cursor.execute("""
                      DELETE FROM Books WHERE Name_book = ?
-                 """, (name_book,))
+                 """, (correct_name_book,))
          except sqlite3.Error as e:
              raise Exception(f"Ошибка при Удалении книги: {str(e)}")
  
