@@ -280,9 +280,11 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     else:
                         file_name += ch
                 open_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
-                open_btn.clicked.connect(self.clickedLinePB)
+                open_btn.clicked.connect(self.clicked_open)
                 delete_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
                 delete_btn.clicked.connect(self.clicked_delete)
+                copy_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
+                copy_btn.clicked.connect(self.clicked_copy)
                 item_layout = QHBoxLayout()
                 item_layout.addWidget(line_text)
                 item_layout.addWidget(line_empty)
@@ -296,7 +298,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 self.listWidget.addItem(item)
                 self.listWidget.setItemWidget(item, item_widget)
 
-    def clickedLinePB(self):
+    def clicked_open(self):
         sender = self.sender()
         push_button = self.findChild(QPushButton, sender.objectName())
 
@@ -391,7 +393,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
         except Exception as e:
             return {"Ошибка": str(e)}
 
-
+    def clicked_copy(self):
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
