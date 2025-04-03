@@ -82,7 +82,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
         if not book_name:
             QMessageBox.warning(self, 'Ошибка', 'Введите название книги')
             return
-
         try:
             year = int(year)
             if year <= 0 or year >= 3000:
@@ -270,6 +269,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         file_name += ch
                 open_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
                 open_btn.clicked.connect(self.clickedLinePB)
+                delete_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
+                delete_btn.clicked.connect(self.clicked_delete)
                 item_layout = QHBoxLayout()
                 item_layout.addWidget(line_text)
                 item_layout.addWidget(line_empty)
@@ -293,6 +294,34 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Запускаем файл
         os.startfile(books_dir / f"{push_button.objectName()}" )
+    
+    def clicked_delete(self):
+        sender = self.sender()
+        push_button = self.findChild(QPushButton, sender.objectName())
+
+        # Получаем путь до текущей директории
+        base_dir = Path(__file__).parent.resolve()
+        books_dir = base_dir / "books"
+
+        full_dir = books_dir / f"{push_button.objectName()}"
+        
+        book_name_in_db = push_button.objectName()
+
+        book_name_in_db.lower()
+
+        book_name_in_db = book_name_in_db[:-8]
+
+        print(book_name_in_db)
+        print(full_dir)
+
+        db_manager = DatabaseManager()
+
+        db_manager.delete_book(book_name_in_db)
+
+        os.remove(books_dir / f"{push_button.objectName()}")
+
+        self.search_books()
+
 
 
 if __name__ == "__main__":
