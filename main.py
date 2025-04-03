@@ -1,7 +1,7 @@
 import sys
 import os
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QMimeData, QUrl
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
 from create_db import setup_database
 from main_window import Ui_MainWindow
@@ -208,7 +208,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def search_books(self):
         
         if self.window_search_book_name_book.text() != '':
-            book_name = self.window_search_book_name_book.text()
+            book_name = self.window_search_book_name_book.text().lower()
         else:
             book_name = None
 
@@ -226,7 +226,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         filters = {
 
-            "name": book_name.lower(),
+            "name": book_name,
             "author": author,
             "year": year,
             "genres": [],
@@ -397,7 +397,20 @@ class MyApp(QMainWindow, Ui_MainWindow):
             return {"Ошибка": str(e)}
 
     def clicked_copy(self):
-        pass
+        sender = self.sender()
+        push_button = self.findChild(QPushButton, sender.objectName())
+
+        base_dir = Path(__file__).parent.resolve()
+        books_dir = base_dir / "books"
+
+        full_dir = books_dir / f"{push_button.objectName()}"
+
+        mime_data = QMimeData()
+        mime_data.setUrls([QUrl.fromLocalFile(str(full_dir))])
+
+        clipboard = QApplication.clipboard()
+        clipboard.setMimeData(mime_data)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
