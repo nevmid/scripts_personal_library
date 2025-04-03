@@ -202,10 +202,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         author = []
 
-        author.append(self.window_search_book_firstname.text())
-        author.append(self.window_search_book_lastname.text())
-        author.append(self.window_search_book_middlename.text())
-        author.append(self.window_search_book_nickname.text())
+        author.append(self.window_search_book_firstname.text().lower())
+        author.append(self.window_search_book_lastname.text().lower())
+        author.append(self.window_search_book_middlename.text().lower())
+        author.append(self.window_search_book_nickname.text().lower())
 
         if self.window_search_book_year.text() != '':
             year = self.window_search_book_year.text()
@@ -214,7 +214,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         filters = {
 
-            "name": book_name,
+            "name": book_name.lower(),
             "author": author,
             "year": year,
             "genres": [],
