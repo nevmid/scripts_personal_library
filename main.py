@@ -30,6 +30,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Загрузка расширений
         db_manager = DatabaseManager()
         db_manager.create_extensions()
+
+        # При запуске отображаем все книги
+        self.search_books()
     
         self.add_book_button.clicked.connect(self.show_window_add_book)
         self.search_book_button.clicked.connect(self.show_window_search_book)
