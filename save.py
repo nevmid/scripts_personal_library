@@ -30,6 +30,7 @@ class DatabaseManager:
          try:
              with self._get_connection() as conn:
                  cursor = conn.cursor()
+                 conn.execute("PRAGMA foreign_keys = ON") #//////////////////////////////////////////////////
                  cursor.execute("""
                      DELETE FROM Books WHERE Name_book = ?
                  """, (name_book,))
