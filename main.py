@@ -5,11 +5,15 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
 from create_db import setup_database
 from main_window import Ui_MainWindow
-from save import add_book, create_extension, connect_book_extension
+from save import DatabaseManager, copy_book_file
 from load_data import GetData
 import shutil
 from pathlib import Path  
 import sqlite3 ##############
+
+# для fb2
+from lxml import etree
+import xml.etree.ElementTree as ET 
 
 class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -24,7 +28,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
             os.mkdir("books")
 
         # Загрузка расширений
-        create_extension()
+        db_manager = DatabaseManager()
+        db_manager.create_extensions()
     
         self.add_book_button.clicked.connect(self.show_window_add_book)
         self.search_book_button.clicked.connect(self.show_window_search_book)
@@ -68,100 +73,93 @@ class MyApp(QMainWindow, Ui_MainWindow):
 #-------------------------------#
 # Функция добавления книги
     def add_book(self):
-        
-        # Получение данных о книге
-        book_name = self.window_add_book_name_book.text()
-        year = self.window_add_book_year.text()
-        author_firstname = self.window_add_book_firstname.text()
-        author_lastname = self.window_add_book_lastname.text()
-        author_middlename = self.window_add_book_middlename.text()
-        author_nickname= self.window_add_book_nickname.text()
-        # author = self.lineEdit_4.text()
-        path_book = self.window_add_file_path.text()
+        # Получение данных из полей ввода
+        book_name = self.window_add_book_name_book.text().strip()
+        year = self.window_add_book_year.text().strip()
+        author_firstname = self.window_add_book_firstname.text().strip()
+        author_lastname = self.window_add_book_lastname.text().strip()
+        author_middlename = self.window_add_book_middlename.text().strip()
+        author_nickname = self.window_add_book_nickname.text().strip()
+        path_book = self.window_add_file_path.text().strip()
 
-        # Проверка
-        # print("Имя книги: ", book_name)
-        # print("Год: ", year)
-        # print("Имя автора: ", author_firstname)
-        # print("Фаммилия автора: ", author_lastname)
-        # print("Отчество автора: ", author_middlename)
-        # print("Псевдоним автора: ", author_nikname)
-        # print("Путь до файла: ", path_book)
-
-        # Копирование файла
-
-        # Обработка имени книги для файла
-        book_name_for_db = ""
-        for ch in book_name:
-            if ch == " ":
-                book_name_for_db += "_"
-            elif ch != " ":
-                book_name_for_db += ch
-        
-        # Получение расширения и пути до файла
-        book_path = os.path.splitext(path_book)[0]
-        book_extension = os.path.splitext(path_book)[1] 
-
-        # Проверка расширения файла для книг
-        if book_extension != '.fb2' and book_extension != '.pdf' and book_extension != '.txt':
-            QMessageBox.information(self, 'Сообщение', 'Выберите файл с расширением для книги')
+        # Валидация данных
+        if not book_name:
+            QMessageBox.warning(self, 'Ошибка', 'Введите название книги')
             return
-
-        # Проверка корректности года
         try:
-            int(year)
+            year = int(year)
+            if year <= 0 or year >= 3000:
+                raise ValueError
         except ValueError:
-            QMessageBox.information(self, 'Сообщение', 'Дата должна быть целым числом')
+            QMessageBox.warning(self, 'Ошибка', 'Введите корректный год издания (от 1 до 2999)')
             return
 
-        if int(year) <= 0 or int(year) >= 3000:
-            QMessageBox.information(self, 'Сообщение', 'Введите дату от 0 до 3000')
-            return
-
-        # Проверка автора
-        if author_firstname == "" or author_lastname == "":
-            QMessageBox.information(self, 'Сообщение', 'Ведите имя и фамилию автора')
+        if not author_firstname or not author_lastname:
+            QMessageBox.warning(self, 'Ошибка', 'Введите имя и фамилию автора')
             return
 
         if len(author_firstname) < 2:
-            QMessageBox.information(self, 'Сообщение', 'Имя не может состоить из 1 буквы')
+            QMessageBox.warning(self, 'Ошибка', 'Имя автора должно содержать минимум 2 символа')
             return
 
-        if len(author_lastname) < 5:
-            QMessageBox.information(self, 'Сообщение', 'Фамили не может состять из 4 и меньше букв')
+        if len(author_lastname) < 2:
+            QMessageBox.warning(self, 'Ошибка', 'Фамилия автора должна содержать минимум 2 символа')
             return
 
-        if book_name == "":
-            QMessageBox.information(self, 'Сообщение', 'Введите название книги')
+        if not path_book:
+            QMessageBox.warning(self, 'Ошибка', 'Выберите файл книги')
             return
 
-        # Создание имени для файла для папки books
-        book_name_for_db += "_" + book_extension[1:]
+        # Проверка расширения файла
+        _, file_extension = os.path.splitext(path_book)
+        file_extension = file_extension.lower()
+        if file_extension not in ['.fb2', '.pdf', '.txt']:
+            QMessageBox.warning(self, 'Ошибка', 'Поддерживаются только файлы с расширениями .fb2, .pdf, .txt')
+            return
 
-        # Добавление книги
-        if add_book(book_name.lower(), int(year)):
-            QMessageBox.information(self, 'Сообщение', 'Книга добавлена')
-        else:
-            QMessageBox.information(self, 'Сообщение', 'Книга не добавлена')
+        # Создаем экземпляр менеджера БД
+        db_manager = DatabaseManager()
 
-        # Проверка на существование данной книги в БД
+        try:
+            # Проверяем существование книги
+            if db_manager.book_exists(book_name):
+                QMessageBox.warning(self, 'Ошибка', 'Книга с таким названием уже существует')
+                return
 
-        # Получение id добавленной книги
-        loaddata = GetData()
-        loaddata.conn = sqlite3.connect("book_db.db") ################ ТУТ НЕ НАДО ТАК
-        id_book = loaddata.get_id_book(book_name.lower()) # Вывод (id, )
-        id_extension = loaddata.get_id_formats(book_extension[1:]) # Вывод (id, )
- 
-        # Копируем файл в папку books
-        base_dir = Path(__file__).parent.resolve()
-        books_dir = base_dir / "books"
-        dest_path = books_dir / f"{book_name_for_db.lower()}{book_extension}"
-        shutil.copy(path_book, dest_path)
+            # 1. Добавляем книгу
+            book_id = db_manager.add_book(book_name, year)
 
-        # Связываем книгу и формат
-        connect_book_extension(id_book[0][0], id_extension[0][0])
+            # 2. Добавляем автора
+            author_id = db_manager.add_author(
+                firstname=author_firstname,
+                lastname=author_lastname,
+                middlename=author_middlename if author_middlename else None,
+                nickname=author_nickname if author_nickname else None
+            )
 
-        # Очищение полей ввода
+            # 3. Связываем книгу и автора
+            db_manager.link_book_author(book_id, author_id)
+
+            # 4. Получаем ID формата
+            format_name = file_extension[1:]  # Убираем точку (.fb2 → fb2)
+            format_id = db_manager.get_format_id(format_name)
+
+            if not format_id:
+                QMessageBox.critical(self, 'Ошибка', f'Формат {format_name} не поддерживается')
+                return
+
+            # 5. Связываем книгу и формат
+            db_manager.link_book_format(book_id, format_id)
+
+            # 6. Копируем файл книги
+            copy_book_file(path_book, book_name, format_name)
+
+            QMessageBox.information(self, 'Успех', 'Книга и автор успешно добавлены')
+
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'Ошибка: {str(e)}')
+
+        # Очищаем поля ввода
         self.window_add_book_name_book.clear()
         self.window_add_book_year.clear()
         self.window_add_book_firstname.clear()
@@ -169,6 +167,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.window_add_book_middlename.clear()
         self.window_add_book_nickname.clear()
         self.window_add_file_path.clear()
+
+        # Возвращаемся на главный экран
+        self.show_main_window()
 
 # Функция получения пути до файла
     def open_file_dialog(self):
@@ -182,6 +183,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
         
         # Если файл выбран (не нажата отмена)
         if file_name:
+
+            # Проверяем расширение файла
+            _, file_extension = os.path.splitext(file_name)
+            file_extension = file_extension.lower()
+            if file_extension == ".fb2":
+                # Если fb2 то заполняем из метаданных
+                self.parse_fb2_metadata(file_name)
+            
             self.window_add_file_path.setText(f"{file_name}")
 
 # Функция проерки существования файла БД
@@ -272,6 +281,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         file_name += ch
                 open_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
                 open_btn.clicked.connect(self.clickedLinePB)
+                delete_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
+                delete_btn.clicked.connect(self.clicked_delete)
                 item_layout = QHBoxLayout()
                 item_layout.addWidget(line_text)
                 item_layout.addWidget(line_empty)
@@ -295,6 +306,91 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Запускаем файл
         os.startfile(books_dir / f"{push_button.objectName()}" )
+    
+    def clicked_delete(self):
+        sender = self.sender()
+        push_button = self.findChild(QPushButton, sender.objectName())
+
+        # Получаем путь до текущей директории
+        base_dir = Path(__file__).parent.resolve()
+        books_dir = base_dir / "books"
+
+        full_dir = books_dir / f"{push_button.objectName()}"
+        
+        book_name_in_db = push_button.objectName()
+
+        book_name_in_db.lower()
+
+        book_name_in_db = book_name_in_db[:-8]
+
+        print(book_name_in_db)
+        print(full_dir)
+
+        db_manager = DatabaseManager()
+
+        db_manager.delete_book(book_name_in_db)
+
+        os.remove(books_dir / f"{push_button.objectName()}")
+
+        self.search_books()
+
+    def parse_fb2_metadata(self, path):
+        try:
+            # 1. Парсим XML-структуру FB2
+            tree = ET.parse(path)  # Загружаем файл
+            root = tree.getroot()  # Получаем корневой элемент
+            # 2. Указываем namespace (пространство имён FB2)
+            ns = {'fb2': 'http://www.gribuser.ru/xml/fictionbook/2.0'}
+            # 3. Ищем блок <title-info> (метаданные книги)
+            title_info = root.find('.//fb2:title-info', ns)
+            # 4. Извлекаем автора
+            if title_info is not None:
+                author_elem = title_info.find('fb2:author', ns)
+                if author_elem is not None:
+                    first_name = author_elem.find('fb2:first-name', ns).text if author_elem.find('fb2:first-name', ns) is not None else ""
+                    last_name = author_elem.find('fb2:last-name', ns).text if author_elem.find('fb2:last-name', ns) is not None else ""
+                    author = f"{first_name} {last_name}".strip()
+                else:
+                    author = "Не указан"
+                # 5. Извлекаем название книги
+                book_title = title_info.find('fb2:book-title', ns).text if title_info.find('fb2:book-title', ns) is not None else "Не указано"
+                # 6. Извлекаем дату написания книги (атрибут value)
+                book_date = title_info.find('fb2:date', ns).get('value') if title_info.find('fb2:date', ns) is not None else "Не указана"
+            else:
+                author, book_title, book_date = "Не найдено", "Не найдено", "Не найдено"
+            # 7. Ищем блок <document-info> (метаданные файла FB2)
+            doc_info = root.find('.//fb2:document-info', ns)
+            if doc_info is not None:
+                fb2_date = doc_info.find('fb2:date', ns).get('value') if doc_info.find('fb2:date', ns) is not None else "Не указана"
+            else:
+                fb2_date = "Не найдена"
+
+            # Устанавливаем название книги
+            self.window_add_book_name_book.clear()
+            self.window_add_book_name_book.setText(f"{book_title}")
+
+            # Устанавливаем дату книги
+            self.window_add_book_year.clear()
+            if book_date:
+                self.window_add_book_year.setText(f"{book_date[:4]}")
+            elif fb2_date:
+                self.window_add_book_year.setText(f"{fb2_date[:4]}")
+
+            # Устанавливаем имя автора книги
+            self.window_add_book_firstname.clear()
+            self.window_add_book_firstname.setText(f"{first_name}")
+
+            # Устанавливаем Фамилию автора книги
+            self.window_add_book_lastname.clear()
+            self.window_add_book_lastname.setText(f"{last_name}")
+
+            # Очищаем остальные поля
+            self.window_add_book_nickname.clear()
+            self.window_add_book_middlename.clear()
+
+        except Exception as e:
+            return {"Ошибка": str(e)}
+
 
 
 if __name__ == "__main__":
