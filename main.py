@@ -11,6 +11,10 @@ import shutil
 from pathlib import Path  
 import sqlite3 ##############
 
+# для fb2
+from lxml import etree
+import xml.etree.ElementTree as ET 
+
 class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
@@ -179,6 +183,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
         
         # Если файл выбран (не нажата отмена)
         if file_name:
+
+            # Проверяем расширение файла
+            _, file_extension = os.path.splitext(file_name)
+            file_extension = file_extension.lower()
+            if file_extension == ".fb2":
+                # Если fb2 то заполняем из метаданных
+                self.parse_fb2_metadata(file_name)
+            
             self.window_add_file_path.setText(f"{file_name}")
 
 # Функция проерки существования файла БД
@@ -321,6 +333,63 @@ class MyApp(QMainWindow, Ui_MainWindow):
         os.remove(books_dir / f"{push_button.objectName()}")
 
         self.search_books()
+
+    def parse_fb2_metadata(self, path):
+        try:
+            # 1. Парсим XML-структуру FB2
+            tree = ET.parse(path)  # Загружаем файл
+            root = tree.getroot()  # Получаем корневой элемент
+            # 2. Указываем namespace (пространство имён FB2)
+            ns = {'fb2': 'http://www.gribuser.ru/xml/fictionbook/2.0'}
+            # 3. Ищем блок <title-info> (метаданные книги)
+            title_info = root.find('.//fb2:title-info', ns)
+            # 4. Извлекаем автора
+            if title_info is not None:
+                author_elem = title_info.find('fb2:author', ns)
+                if author_elem is not None:
+                    first_name = author_elem.find('fb2:first-name', ns).text if author_elem.find('fb2:first-name', ns) is not None else ""
+                    last_name = author_elem.find('fb2:last-name', ns).text if author_elem.find('fb2:last-name', ns) is not None else ""
+                    author = f"{first_name} {last_name}".strip()
+                else:
+                    author = "Не указан"
+                # 5. Извлекаем название книги
+                book_title = title_info.find('fb2:book-title', ns).text if title_info.find('fb2:book-title', ns) is not None else "Не указано"
+                # 6. Извлекаем дату написания книги (атрибут value)
+                book_date = title_info.find('fb2:date', ns).get('value') if title_info.find('fb2:date', ns) is not None else "Не указана"
+            else:
+                author, book_title, book_date = "Не найдено", "Не найдено", "Не найдено"
+            # 7. Ищем блок <document-info> (метаданные файла FB2)
+            doc_info = root.find('.//fb2:document-info', ns)
+            if doc_info is not None:
+                fb2_date = doc_info.find('fb2:date', ns).get('value') if doc_info.find('fb2:date', ns) is not None else "Не указана"
+            else:
+                fb2_date = "Не найдена"
+
+            # Устанавливаем название книги
+            self.window_add_book_name_book.clear()
+            self.window_add_book_name_book.setText(f"{book_title}")
+
+            # Устанавливаем дату книги
+            self.window_add_book_year.clear()
+            if book_date:
+                self.window_add_book_year.setText(f"{book_date[:4]}")
+            elif fb2_date:
+                self.window_add_book_year.setText(f"{fb2_date[:4]}")
+
+            # Устанавливаем имя автора книги
+            self.window_add_book_firstname.clear()
+            self.window_add_book_firstname.setText(f"{first_name}")
+
+            # Устанавливаем Фамилию автора книги
+            self.window_add_book_lastname.clear()
+            self.window_add_book_lastname.setText(f"{last_name}")
+
+            # Очищаем остальные поля
+            self.window_add_book_nickname.clear()
+            self.window_add_book_middlename.clear()
+
+        except Exception as e:
+            return {"Ошибка": str(e)}
 
 
 
