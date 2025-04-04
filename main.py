@@ -1,6 +1,7 @@
 import sys
 import os
 
+from PyQt5.QtGui import QIcon #
 from PyQt5.QtCore import Qt, QMimeData, QUrl
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
 from create_db import setup_database
@@ -19,6 +20,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+
+        self.setWindowIcon(QIcon("app_icon.ico"))  # или .png
+
+        # Устанавливаем имя программы      
+        self.setWindowTitle("BookHive")
+        
+        # Устанавливаем икноку для программы
+        self.setWindowIcon(QIcon("logo.png"))
 
         # Проверка существования БД
         self.create_db()
@@ -129,6 +138,21 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 QMessageBox.warning(self, 'Ошибка', 'Книга с таким названием уже существует')
                 return
 
+            # Проблема при удаленни книги из дб
+            # так как в бд хранится название как Computer Science
+            # а в папке books как computer_science_pdf.pdf
+            # при нажатии на кнопку мы полчаем computer_science_pdf.pdf
+            # удаляем такой файл из папки books
+            # потом убираем _pdf.pdf и получаем computer_science
+            # и по этому имени ищем в БД НО В БД хранится Computer Science
+
+
+            # #////////
+            # file_extension = os.path.splitext(source_path)[1].lower()
+            # safe_book_name = book_name.replace(" ", "_").lower()
+            # new_filename = f"{safe_book_name}_{format_name}{file_extension}"
+            # #////////
+
             # 1. Добавляем книгу
             book_id = db_manager.add_book(book_name, year)
 
@@ -193,7 +217,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             if file_extension == ".fb2":
                 # Если fb2 то заполняем из метаданных
                 self.parse_fb2_metadata(file_name)
-            
+
             self.window_add_file_path.setText(f"{file_name}")
 
 # Функция проерки существования файла БД
@@ -214,10 +238,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         author = []
 
-        author.append(self.window_search_book_firstname.text().lower())
-        author.append(self.window_search_book_lastname.text().lower())
-        author.append(self.window_search_book_middlename.text().lower())
-        author.append(self.window_search_book_nickname.text().lower())
+        author.append(self.window_search_book_firstname.text())
+        author.append(self.window_search_book_lastname.text())
+        author.append(self.window_search_book_middlename.text())
+        author.append(self.window_search_book_nickname.text())
 
         if self.window_search_book_year.text() != '':
             year = self.window_search_book_year.text()
@@ -283,11 +307,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     else:
                         file_name += ch
                 open_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
-                open_btn.clicked.connect(self.clicked_open)
+                open_btn.clicked.connect(self.clickedLinePB)
                 delete_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
                 delete_btn.clicked.connect(self.clicked_delete)
+                
                 copy_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
                 copy_btn.clicked.connect(self.clicked_copy)
+                
                 item_layout = QHBoxLayout()
                 item_layout.addWidget(line_text)
                 item_layout.addWidget(line_empty)
@@ -301,7 +327,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 self.listWidget.addItem(item)
                 self.listWidget.setItemWidget(item, item_widget)
 
-    def clicked_open(self):
+    def clickedLinePB(self):
         sender = self.sender()
         push_button = self.findChild(QPushButton, sender.objectName())
 
@@ -337,7 +363,28 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         os.remove(books_dir / f"{push_button.objectName()}")
 
+        # Выводсообщения о том что книги скопирована
+        QMessageBox.information(self, 'Удаление', 'Книга удалена')
+
         self.search_books()
+    
+    def clicked_copy(self):
+         sender = self.sender()
+         push_button = self.findChild(QPushButton, sender.objectName())
+ 
+         base_dir = Path(__file__).parent.resolve()
+         books_dir = base_dir / "books"
+ 
+         full_dir = books_dir / f"{push_button.objectName()}"
+ 
+         mime_data = QMimeData()
+         mime_data.setUrls([QUrl.fromLocalFile(str(full_dir))])
+ 
+         clipboard = QApplication.clipboard()
+         clipboard.setMimeData(mime_data)
+
+        # Вывод сообщения о том что книги скопирована
+         QMessageBox.information(self, 'Копирование', 'Книга скопирована')
 
     def parse_fb2_metadata(self, path):
         try:
@@ -396,20 +443,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
         except Exception as e:
             return {"Ошибка": str(e)}
 
-    def clicked_copy(self):
-        sender = self.sender()
-        push_button = self.findChild(QPushButton, sender.objectName())
-
-        base_dir = Path(__file__).parent.resolve()
-        books_dir = base_dir / "books"
-
-        full_dir = books_dir / f"{push_button.objectName()}"
-
-        mime_data = QMimeData()
-        mime_data.setUrls([QUrl.fromLocalFile(str(full_dir))])
-
-        clipboard = QApplication.clipboard()
-        clipboard.setMimeData(mime_data)
 
 
 if __name__ == "__main__":
