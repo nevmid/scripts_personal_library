@@ -4,7 +4,9 @@ import sqlite3
 class GetData:
 
     def __init__(self):
-        self.conn = None
+        # self.conn = None
+
+        self.conn = sqlite3.connect('book_db.db')
 
     def get_books(self, filters):
         try:
