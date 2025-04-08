@@ -177,6 +177,36 @@ class DatabaseManager:
         except sqlite3.Error as e:
              raise Exception(f"Ошибка при добавлении тега: {str(e)}")
 
+     def link_book_tags(self, id_book, id_tag):
+        """Связка книги с тегом"""
+        try:
+             with self._get_connection() as conn:
+                 cursor = conn.cursor()
+                 
+                 conn.execute("PRAGMA foreign_keys = ON")
+                 cursor.execute("""INSERT INTO Books_Tags (ID_book, ID_tag)
+                 VALUES (?, ?)""", (id_book, id_tag,))
+                 
+                 conn.commit()
+
+        except sqlite3.Error as e:
+             raise Exception(f"Ошибка при связывании тега и книги: {str(e)}")
+
+     def link_book_genre(self, id_book, id_genre):
+        """Связка книги с жанром"""
+        try:
+             with self._get_connection() as conn:
+                 cursor = conn.cursor()
+                 
+                 conn.execute("PRAGMA foreign_keys = ON")
+                 cursor.execute("""INSERT INTO Books_Genres (ID_book, ID_genre)
+                 VALUES (?, ?)""", (id_book, id_genre,))
+                 
+                 conn.commit()
+
+        except sqlite3.Error as e:
+             raise Exception(f"Ошибка при связывании тега и книги: {str(e)}")
+
  
 def copy_book_file(source_path, book_name, format_name, books_dir="books"):
      """Копирует файл книги в целевую директорию"""
