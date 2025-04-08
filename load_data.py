@@ -4,13 +4,17 @@ import sqlite3
 class GetData:
 
     def __init__(self):
-        # self.conn = None
+        self.conn = None
 
+    def get_connection(self):
         self.conn = sqlite3.connect('book_db.db')
+
+    def close_connection(self):
+        self.conn.close()
 
     def get_books(self, filters):
         try:
-            self.conn = sqlite3.connect('book_db.db')
+            self.get_connection()
             cursor = self.conn.cursor()
             query = """
             SELECT b.Name_book, GROUP_CONCAT(DISTINCT f.Name_format) AS formats
@@ -89,7 +93,7 @@ class GetData:
             print(e)
         finally:
             if self.conn:
-                self.conn.close()
+                self.close_connection()
 
     def get_id_book(self, book_name):
         try:
@@ -152,7 +156,7 @@ class GetData:
 
     def get_info_about_books(self, flag=False, book_name=None):
         try:
-            self.conn = sqlite3.connect('book_db.db')
+            self.get_connection()
             cursor = self.conn.cursor()
             if flag:
                 id_book = self.get_id_book(book_name)
@@ -213,11 +217,11 @@ class GetData:
             print(e)
         finally:
             if self.conn:
-                self.conn.close()
+                self.close_connection()
 
     def get_info_about_authors(self, author, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('book_db.db')
+            self.get_connection()
             cursor = self.conn.cursor()
 
             if flag:
@@ -248,11 +252,11 @@ class GetData:
             print(e)
         finally:
             if self.conn:
-                self.conn.close()
+                self.close_connection()
 
-    def get_info_about_tags(self, tag_name, flag, book_name=None):
+    def get_info_about_tags(self, full, flag, book_name=None, tag_name=None):
         try:
-            self.conn = sqlite3.connect('book_db.db')
+            self.get_connection()
             cursor = self.conn.cursor()
             if flag:
 
@@ -262,11 +266,23 @@ class GetData:
                 cursor.execute("SELECT ID FROM Books_Tags WHERE ID_book = ? AND ID_tag = ?",
                                [id_book, id_tag])
 
+                result = cursor.fetchall()
+
+            elif full:
+                query = "SELECT * FROM Tags"
+                cursor.execute(query)
+
+                columns = [column[0] for column in cursor.description]
+                tags = cursor.fetchall()
+
+                result = [dict(zip(columns, row)) for row in tags]
+
             else:
                 query = "SELECT * FROM Tags WHERE Name_tag = ?"
                 cursor.execute(query, tag_name)
+                result = cursor.fetchall()
 
-            result = cursor.fetchall()
+
 
             return result
 
@@ -274,11 +290,11 @@ class GetData:
             print(e)
         finally:
             if self.conn:
-                self.conn.close()
+                self.close_connection()
 
     def get_info_about_genres(self, genre_name, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('book_db.db')
+            self.get_connection()
             cursor = self.conn.cursor()
             if flag:
 
@@ -300,11 +316,11 @@ class GetData:
             print(e)
         finally:
             if self.conn:
-                self.conn.close()
+                self.close_connection()
 
     def get_info_about_formats(self, format_name, flag, book_name=None):
         try:
-            self.conn = sqlite3.connect('book_db.db')
+            self.get_connection()
             cursor = self.conn.cursor()
             if flag:
 
@@ -326,27 +342,5 @@ class GetData:
             print('Error: ', e)
         finally:
             if self.conn:
-                self.conn.close()
+                self.close_connection()
 
-    def get_all_tags(self):
-        try:
-            self.conn = sqlite3.connect('book_db.db')
-            cursor = self.conn.cursor()
-
-            query = "SELECT * FROM Tags"
-            cursor.execute(query)
-
-            # Получение названий столбцов
-            columns = [column[0] for column in cursor.description]
-            result = cursor.fetchall()
-
-            # Преобразование в список словарей
-            tags = [dict(zip(columns, row)) for row in result]
-            return tags
-
-        except Exception as e:
-            print(f"Ошибка при получении тегов: {e}")
-            return []
-        finally:
-            if self.conn:
-                self.conn.close()

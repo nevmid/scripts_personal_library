@@ -454,12 +454,16 @@ class MyApp(QMainWindow, Ui_MainWindow):
         dbm = DatabaseManager()
         ld = GetData()
         # print(ld.get_id_tag(str(name_new_tag).lower()))
+        ld.get_connection()
+
         if ld.get_id_tag(str(name_new_tag).lower()):
             # Вывод сообщения о том что тег с такми название муже сущетвует
             QMessageBox.information(self, 'Добавление ткга', f"Тэг с названием {name_new_tag} уже существует")
             return
         else:
             dbm.add_tag(str(name_new_tag))
+
+        ld.close_connection()
         # Вывод сообщения о том что тег успешно добавлен
         QMessageBox.information(self, 'Добавление тега', f'Тег с названием {name_new_tag} добавлен')
         self.window_add_tag_name_tag.clear()
@@ -476,9 +480,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         main_el = QStandardItem("Пользовательские теги")
 
-        for el in ld.get_all_tags():
+        for el in ld.get_info_about_tags(full=True, flag=False):
 
-            children = QStandardItem(f"{el["Name_tag"]}")
+            children = QStandardItem(f"{el['Name_tag']}")
 
             main_el.appendRow([children])
 

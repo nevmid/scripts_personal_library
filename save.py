@@ -144,7 +144,7 @@ class DatabaseManager:
          except sqlite3.Error as e:
              raise Exception(f"Ошибка при проверке существования книги: {str(e)}")
           
-      def add_tag(self, tag_name):
+     def add_tag(self, tag_name):
         """Добавление тега"""
         try:
              with self._get_connection() as conn:
