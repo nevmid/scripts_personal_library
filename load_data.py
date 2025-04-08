@@ -292,7 +292,7 @@ class GetData:
             if self.conn:
                 self.close_connection()
 
-    def get_info_about_genres(self, genre_name, flag, book_name=None):
+    def get_info_about_genres(self, full, flag, genre_name=None, book_name=None):
         try:
             self.get_connection()
             cursor = self.conn.cursor()
@@ -303,12 +303,22 @@ class GetData:
 
                 cursor.execute("SELECT ID FROM Books_Genres WHERE ID_book = ? AND ID_genre = ?",
                                [id_book, id_genre])
+            elif full:
+                query = "SELECT * FROM Genres"
+                cursor.execute(query)
+
+                columns = [column[0] for column in cursor.description]
+
+                genres = cursor.fetchall()
+
+                result = [dict(zip(columns, row)) for row in genres]
+
 
             else:
                 query = "SELECT * FROM Genres WHERE Name_genre = ?"
                 cursor.execute(query, genre_name)
 
-            result = cursor.fetchall()
+                result = cursor.fetchall()
 
             return result
 
