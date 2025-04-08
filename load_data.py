@@ -327,3 +327,26 @@ class GetData:
         finally:
             if self.conn:
                 self.conn.close()
+
+    def get_all_tags(self):
+        try:
+            self.conn = sqlite3.connect('book_db.db')
+            cursor = self.conn.cursor()
+
+            query = "SELECT * FROM Tags"
+            cursor.execute(query)
+
+            # Получение названий столбцов
+            columns = [column[0] for column in cursor.description]
+            result = cursor.fetchall()
+
+            # Преобразование в список словарей
+            tags = [dict(zip(columns, row)) for row in result]
+            return tags
+
+        except Exception as e:
+            print(f"Ошибка при получении тегов: {e}")
+            return []
+        finally:
+            if self.conn:
+                self.conn.close()
