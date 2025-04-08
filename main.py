@@ -86,7 +86,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
     
     def show_window_search_book(self):
         # print("Search book")
-
+        self.load_tags_and_genre_to_window_search_book()
 
         self.stackedWidget.setCurrentIndex(3)
     
@@ -191,7 +191,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             copy_book_file(path_book, book_name, format_name)
 
             # 7. Получение выбранных тегов и жанров
-            select_tags, select_genre = self.get_select_tag_and_genre()
+            select_tags, select_genre = self.get_select_tag_and_genre(tree_widget=self.window_add_book_treeWidget)
 
             for tag in select_tags:
                 db_manager.link_book_tags(id_book=book_id, id_tag=tag["id"])
@@ -216,11 +216,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Возвращаемся на главный экран
         self.show_main_window()
 
-    def get_select_tag_and_genre(self):
+    def get_select_tag_and_genre(self, tree_widget=None):
+        if tree_widget is None:
+            tree_widget = self.sender().parent().findChild(QTreeWidget)  # Автопоиск
+
         selected_tags = []
         selected_genres = []
 
-        root_el_tree = self.window_add_book_treeWidget.invisibleRootItem()
+        root_el_tree = tree_widget.invisibleRootItem()
 
         for i in range(root_el_tree.childCount()):
             parent = root_el_tree.child(i)
@@ -293,13 +296,24 @@ class MyApp(QMainWindow, Ui_MainWindow):
         else:
             year = None
 
+        selected_tags, selected_genres = self.get_select_tag_and_genre(tree_widget=self.window_search_book_treeWidget)
+        tags = []
+        genres = []
+        for tag in selected_tags:
+            tags.append(tag['name'])
+        for genre in selected_genres:
+            genres.append(genre['name'])
+
+        # print(tags)
+        # print(genres)
+
         filters = {
 
             "name": book_name,
             "author": author,
             "year": year,
-            "genres": [],
-            "tags": []
+            "genres": genres,
+            "tags": tags
 
         }
 
@@ -615,13 +629,48 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         for tag in all_tags:
             tag_in_tree = QTreeWidgetItem(root_tags_item)
-            tag_in_tree.setText(0, f"{tag["Name_tag"]}")
+            tag_in_tree.setText(0, f"{tag['Name_tag']}")
             tag_in_tree.setCheckState(1, 0)
             tag_in_tree.setData(0, Qt.UserRole, tag["ID_tag"])
         
         for genre in all_genres:
             genre_in_tree = QTreeWidgetItem(root_genre_item)
-            genre_in_tree.setText(0, f"{genre["Name_genre"]}")
+            genre_in_tree.setText(0, f"{genre['Name_genre']}")
+            genre_in_tree.setCheckState(1, 0)
+            genre_in_tree.setData(0, Qt.UserRole, genre["ID_genre"])
+            genre_in_tree.setData(0, Qt.UserRole + 1, genre["Code"])
+
+    def load_tags_and_genre_to_window_search_book(self):
+
+        self.window_search_book_treeWidget.clear()
+
+        ld = GetData()
+
+        all_tags = ld.get_info_about_tags(full=True, flag=False)
+        # print(all_tags)
+
+        all_genres = ld.get_info_about_genres(full=True, flag=False)
+        # print(all_genres)
+
+        self.window_search_book_treeWidget.setHeaderLabels(["Теги и жанры", "Статус поиска"])
+
+        self.window_search_book_treeWidget.setColumnWidth(0, 350)
+
+        root_tags_item = QTreeWidgetItem(self.window_search_book_treeWidget)
+        root_tags_item.setText(0, "Пользовательские теги")
+
+        root_genre_item = QTreeWidgetItem(self.window_search_book_treeWidget)
+        root_genre_item.setText(0, "Жанры")
+
+        for tag in all_tags:
+            tag_in_tree = QTreeWidgetItem(root_tags_item)
+            tag_in_tree.setText(0, f"{tag['Name_tag']}")
+            tag_in_tree.setCheckState(1, 0)
+            tag_in_tree.setData(0, Qt.UserRole, tag["ID_tag"])
+
+        for genre in all_genres:
+            genre_in_tree = QTreeWidgetItem(root_genre_item)
+            genre_in_tree.setText(0, f"{genre['Name_genre']}")
             genre_in_tree.setCheckState(1, 0)
             genre_in_tree.setData(0, Qt.UserRole, genre["ID_genre"])
             genre_in_tree.setData(0, Qt.UserRole + 1, genre["Code"])

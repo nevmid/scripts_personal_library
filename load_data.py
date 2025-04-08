@@ -66,7 +66,7 @@ class GetData:
                         JOIN Genres g ON g.ID_genre = bg.ID_genre
                         WHERE g.Name_genre IN ({}))
                         """.format(",".join(["?"]*len(value)))
-                        params.append(value)
+                        params.extend(value)
 
                     elif key == "tags":
                         query += """ AND b.Id_book IN
@@ -74,7 +74,7 @@ class GetData:
                         JOIN Tags t ON t.ID_tag = bt.ID_tag
                         WHERE t.Name_tag IN ({}))
                         """.format(",".join(["?"]*len(value)))
-                        params.append(value)
+                        params.extend(value)
 
             query += " GROUP BY b.Name_book"
             result = cursor.execute(query, params)
