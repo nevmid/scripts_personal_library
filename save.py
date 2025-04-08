@@ -160,7 +160,23 @@ class DatabaseManager:
         except sqlite3.Error as e:
              raise Exception(f"Ошибка при добавлении тега: {str(e)}")
 
- 
+     def delete_tags(self, list_tags):
+        """Удаление тега"""
+        try:
+             with self._get_connection() as conn:
+                 cursor = conn.cursor()
+                 
+                 conn.execute("PRAGMA foreign_keys = ON")
+                 for tag in list_tags:
+                    id_tag = tag['id']
+
+                    cursor.execute("""DELETE FROM Tags WHERE ID_tag = ?""", (id_tag,))
+                 
+                 conn.commit()
+
+        except sqlite3.Error as e:
+             raise Exception(f"Ошибка при добавлении тега: {str(e)}")
+
  
 def copy_book_file(source_path, book_name, format_name, books_dir="books"):
      """Копирует файл книги в целевую директорию"""

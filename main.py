@@ -3,7 +3,7 @@ import os
 
 from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QMimeData, QUrl
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout, QTreeWidget, QTreeWidgetItem
 from create_db import setup_database
 from main_window import Ui_MainWindow
 from save import DatabaseManager, copy_book_file
@@ -64,6 +64,11 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Кнопка добавления тега
         self.window_add_tag_btn_add.clicked.connect(self.add_tag)
 
+        # Кнопка удлаение тегов
+        self.window_delete_tag_btn_delete.clicked.connect(self.delete_tags)
+
+
+
 
 # Функции открытия окон
     def show_window_add_book(self):
@@ -83,6 +88,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
     
     def show_window_delete_category(self):
         # print("Delete category")
+
+        self.load_tag_to_window_delete_tag()
+
         self.stackedWidget.setCurrentIndex(4)
     
     def show_main_window(self):
@@ -489,6 +497,67 @@ class MyApp(QMainWindow, Ui_MainWindow):
         root_item.appendRow([main_el])
 
         self.window_add_tag_treeView.setModel(self.model)
+    
+    def load_tag_to_window_delete_tag(self):
+        
+        ld = GetData()
+
+        self.window_delete_tag_treeWidget.clear()  
+
+        self.window_delete_tag_treeWidget.setColumnCount(2)
+        self.window_delete_tag_treeWidget.setHeaderLabels(["Название Тег", "Статус удаления"])
+
+        tags = ld.get_info_about_tags(full=True, flag=False)
+
+        for tag in tags:
+            item = QTreeWidgetItem(self.window_delete_tag_treeWidget)
+
+            item.setText(0 , tag['Name_tag'])
+
+            # Добавляем чекбокс во вторую колонку
+            item.setCheckState(1, Qt.Unchecked)  # По умолчанию не выбран
+        
+            # Можно сохранить данные тега в item
+            item.setData(0, Qt.UserRole, tag["ID_tag"])  # Сохраняем ID тега
+
+    def delete_tags(self):
+
+        sv = DatabaseManager()
+
+        # Получаем количество элементов в treeWidget
+        item_count = self.window_delete_tag_treeWidget.topLevelItemCount()
+        
+        # Создаем список для хранения выбранных тегов
+        selected_tags = []
+        
+        # Перебираем все элементы
+        for i in range(item_count):
+            item = self.window_delete_tag_treeWidget.topLevelItem(i)
+            
+            # Проверяем, отмечен ли чекбокс (вторая колонка)
+            if item.checkState(1) == Qt.Checked:
+                # Получаем данные тега
+                tag_id = item.data(0, Qt.UserRole)  # ID тега
+                tag_name = item.text(0)             # Название тега
+                
+                # Добавляем в список выбранных тегов
+                selected_tags.append({
+                    'id': tag_id,
+                    'name': tag_name
+                })
+        
+        print("selected_tags")
+        print(selected_tags)
+
+        if selected_tags:
+            sv.delete_tags(selected_tags)
+        else:
+            print("Не выбрано ни одного тега для удаления")
+
+        self.load_tag_to_window_delete_tag()
+        
+
+
 
 
 
