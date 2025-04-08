@@ -1,7 +1,7 @@
 import sys
 import os
 
-from PyQt5.QtGui import QIcon #
+from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QMimeData, QUrl
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
 from create_db import setup_database
@@ -76,6 +76,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
     
     def show_window_add_category(self):
         # print("Add category")
+
+        self.load_tag_to_window_add_tag()
+        
         self.stackedWidget.setCurrentIndex(5)
     
     def show_window_delete_category(self):
@@ -460,6 +463,32 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Вывод сообщения о том что тег успешно добавлен
         QMessageBox.information(self, 'Добавление тега', f'Тег с названием {name_new_tag} добавлен')
         self.window_add_tag_name_tag.clear()
+        self.load_tag_to_window_add_tag()
+
+    def load_tag_to_window_add_tag(self):
+
+        ld = GetData()
+
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(['Название тегов'])  # Заголовки столбца
+
+        root_item = self.model.invisibleRootItem()
+
+        main_el = QStandardItem("Пользовательские теги")
+
+        for el in ld.get_all_tags():
+
+            children = QStandardItem(f"{el["Name_tag"]}")
+
+            main_el.appendRow([children])
+
+        root_item.appendRow([main_el])
+
+        self.window_add_tag_treeView.setModel(self.model)
+
+
+
+        
 
 
 
