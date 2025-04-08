@@ -143,6 +143,23 @@ class DatabaseManager:
                  return cursor.fetchone() is not None
          except sqlite3.Error as e:
              raise Exception(f"Ошибка при проверке существования книги: {str(e)}")
+          
+      def add_tag(self, tag_name):
+        """Добавление тега"""
+        try:
+             with self._get_connection() as conn:
+                 cursor = conn.cursor()
+                 
+                 conn.execute("PRAGMA foreign_keys = ON")
+                 
+                 cursor.execute("""INSERT INTO Tags (Name_tag)
+                 VALUES (?)""", (tag_name.lower(),))
+                
+                 conn.commit()
+
+        except sqlite3.Error as e:
+             raise Exception(f"Ошибка при добавлении тега: {str(e)}")
+
  
  
 def copy_book_file(source_path, book_name, format_name, books_dir="books"):
