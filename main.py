@@ -61,6 +61,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Кнопка поиска книги
         self.window_search_book_btn_search.clicked.connect(self.search_books)
 
+        # Кнопка добавления тега
+        self.window_add_tag_btn_add.clicked.connect(self.add_tag)
+
 
 # Функции открытия окон
     def show_window_add_book(self):
@@ -442,6 +445,21 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         except Exception as e:
             return {"Ошибка": str(e)}
+            
+    def add_tag(self):
+        name_new_tag = self.window_add_tag_name_tag.text()
+        dbm = DatabaseManager()
+        ld = GetData()
+        # print(ld.get_id_tag(str(name_new_tag).lower()))
+        if ld.get_id_tag(str(name_new_tag).lower()):
+            # Вывод сообщения о том что тег с такми название муже сущетвует
+            QMessageBox.information(self, 'Добавление ткга', f"Тэг с названием {name_new_tag} уже существует")
+            return
+        else:
+            dbm.add_tag(str(name_new_tag))
+        # Вывод сообщения о том что тег успешно добавлен
+        QMessageBox.information(self, 'Добавление тега', f'Тег с названием {name_new_tag} добавлен')
+        self.window_add_tag_name_tag.clear()
 
 
 
