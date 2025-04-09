@@ -54,27 +54,26 @@ class DatabaseManager:
      def add_author(self, firstname, lastname, middlename=None, nickname=None):
          """Добавляет автора или возвращает существующего"""
          try:
-             author_params = {
-                 'Name': firstname,
-                 'Surname': lastname,
-                 'Patronymic': middlename,
-                 'Nickname': nickname
-             }
-             ld = load_data.GetData()
-             ld.get_connection()
-             existing_authors = ld.get_id_author(author_params)
-             ld.close_connection()
-
-             if existing_authors:
-                 return existing_authors[0][0]
-
              with self._get_connection() as conn:
                  cursor = conn.cursor()
+                 # Проверяем существующего автора
                  cursor.execute("""
-                             INSERT INTO Authors (Name, Surname, Patronymic, Nickname)
-                             VALUES (?, ?, ?, ?)
-                         """, (firstname, lastname, middlename, nickname))
-                 return cursor.lastrowid
+                     SELECT Id_author FROM Authors 
+                     WHERE Name = ? AND Surname = ? 
+                     AND (Patronymic = ? OR (? IS NULL AND Patronymic IS NULL))
+                     AND (Nickname = ? OR (? IS NULL AND Nickname IS NULL))
+                 """, (firstname, lastname, middlename, middlename, nickname, nickname))
+ 
+                 existing_author = cursor.fetchone()
+ 
+                 if existing_author:
+                     return existing_author[0]
+                 else:
+                     cursor.execute("""
+                         INSERT INTO Authors (Name, Surname, Patronymic, Nickname)
+                         VALUES (?, ?, ?, ?)
+                     """, (firstname, lastname, middlename, nickname))
+                     return cursor.lastrowid
          except sqlite3.Error as e:
              raise Exception(f"Ошибка при добавлении автора: {str(e)}")
  
@@ -135,11 +134,13 @@ class DatabaseManager:
      def book_exists(self, book_name):
          """Проверяет, существует ли книга с таким названием"""
          try:
-             ld = load_data.GetData()
-             ld.get_connection()
-             result = ld.get_id_book(book_name.lower())
-             ld.close_connection()
-             return result
+             with self._get_connection() as conn:
+                 cursor = conn.cursor()
+                 cursor.execute("""
+                     SELECT 1 FROM Books 
+                     WHERE LOWER(Name_book) = ?
+                 """, (book_name.lower(),))
+                 return cursor.fetchone() is not None
          except sqlite3.Error as e:
              raise Exception(f"Ошибка при проверке существования книги: {str(e)}")
           
@@ -206,7 +207,58 @@ class DatabaseManager:
         except sqlite3.Error as e:
              raise Exception(f"Ошибка при связывании тега и книги: {str(e)}")
 
- 
+    
+     def update_book(self, book_id, new_name=None, new_year=None):
+        """РћР±РЅРѕРІР»СЏРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ"""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                if new_name:
+                    cursor.execute("""
+                         UPDATE Books 
+                         SET Name_book = ?
+                         WHERE Id_book = ?
+                     """, (new_name.lower(), book_id))
+                if new_year:
+                    cursor.execute("""
+                         UPDATE Books 
+                         SET Year_of_publication = ?
+                         WHERE Id_book = ?
+                     """, (new_year, book_id))
+        except sqlite3.Error as e:
+            raise Exception(f"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РєРЅРёРіРё: {str(e)}")
+    
+     def update_author(self, author_id, firstname=None, lastname=None, middlename=None, nickname=None):
+        """РћР±РЅРѕРІР»СЏРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РІС‚РѕСЂРµ"""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                updates = []
+                params = []
+
+                if firstname:
+                    updates.append("Name = ?")
+                    params.append(firstname)
+                if lastname:
+                    updates.append("Surname = ?")
+                    params.append(lastname)
+                if middlename:
+                    updates.append("Patronymic = ?")
+                    params.append(middlename)
+                if nickname:
+                    updates.append("Nickname = ?")
+                    params.append(nickname)
+
+                if updates:
+                    query = "UPDATE Authors SET " + ", ".join(updates) + " WHERE Id_author = ?"
+                    params.append(author_id)
+                    cursor.execute(query, params)
+        except sqlite3.Error as e:
+            raise Exception(f"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё Р°РІС‚РѕСЂР°: {str(e)}")
+
+
+
+
 def copy_book_file(source_path, book_name, format_name, books_dir="books"):
      """Копирует файл книги в целевую директорию"""
      try:
