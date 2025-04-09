@@ -161,7 +161,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             # Проверяем существование книги
             if db_manager.book_exists(book_name):
                 QMessageBox.warning(self, 'Ошибка', 'Книга с таким названием уже существует')
-
+                return
             # 1. Добавляем книгу
             book_id = db_manager.add_book(book_name, year)
 
