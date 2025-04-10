@@ -2,7 +2,7 @@ import sys
 import os
 
 from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QMimeData, QUrl
+from PyQt5.QtCore import Qt, QMimeData, QUrl, QSize
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout, QTreeWidget, QTreeWidgetItem
 from create_db import setup_database
 from main_window import Ui_MainWindow
@@ -35,6 +35,20 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Проверка существования БД
         self.create_db()
+
+        # Иконки
+        self.open_eye_icon = QIcon("eye.png")
+        self.close_eye_icon = QIcon("close_eye.png")
+
+        self.select_copy = QIcon("select_copy.png")
+        self.not_select_copy = QIcon("not_select_copy.png")
+
+        self.select_delete = QIcon("select_delete.png")
+        self.not_select_delete = QIcon("not_select_delete.png")
+
+        
+        self.select_edit = QIcon("select_edit.png")
+        self.not_select_edit = QIcon("not_select_edit.png")
 
         # Создание папки для книг
         if not os.path.isdir("books"):
@@ -258,130 +272,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # print("Выбранные теги:", selected_tags)
         # print("Выбранные жанры:", selected_genres)
 
-    def open_edit_window(self, book_name):
-        self.current_edit_book_name = book_name
-        loaddata = GetData()
-        book_info = loaddata.get_info_about_books(flag=True, book_name=book_name)
-
-        if book_info:
-            info = book_info[0]
-            self.window_edit_book_name_book.setText(info['name_book'])
-            self.window_edit_book_year.setText(str(info['year']))
-            self.window_edit_book_firstname.setText(info['firstname'])
-            self.window_edit_book_lastname.setText(info['lastname'])
-            self.window_edit_book_middlename.setText(info['middlename'] if info['middlename'] else "")
-            self.window_edit_book_nickname.setText(info['nickname'] if info['nickname'] else "")
-
-            # РЎРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РёР№ ID РєРЅРёРіРё РґР»СЏ РїРѕСЃР»РµРґСѓСЋС‰РµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ
-            self.current_edit_book_id = info['id_book']
-            self.current_edit_author_id = info['id_author']
-
-            self.stackedWidget.setCurrentIndex(2)  # РџРµСЂРµРєР»СЋС‡Р°РµРјСЃСЏ РЅР° РѕРєРЅРѕ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
-        else:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ')
-
-    def edit_book(self):
-        # РџРѕР»СѓС‡Р°РµРј РґР°РЅРЅС‹Рµ РёР· РїРѕР»РµР№ РІРІРѕРґР°
-        new_book_name = self.window_edit_book_name_book.text().strip()
-        year = self.window_edit_book_year.text().strip()
-        author_firstname = self.window_edit_book_firstname.text().strip()
-        author_lastname = self.window_edit_book_lastname.text().strip()
-        author_middlename = self.window_edit_book_middlename.text().strip()
-        author_nickname = self.window_edit_book_nickname.text().strip()
-
-        # Р’Р°Р»РёРґР°С†РёСЏ РґР°РЅРЅС‹С…
-        if not new_book_name:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РєРЅРёРіРё')
-            return
-        try:
-            year = int(year)
-            if year <= 0 or year >= 3000:
-                raise ValueError
-        except ValueError:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ РіРѕРґ РёР·РґР°РЅРёСЏ (РѕС‚ 1 РґРѕ 2999)')
-            return
-
-        if not author_firstname or not author_lastname:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РёРјСЏ Рё С„Р°РјРёР»РёСЋ Р°РІС‚РѕСЂР°')
-            return
-
-        if len(author_firstname) < 2:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РРјСЏ Р°РІС‚РѕСЂР° РґРѕР»Р¶РЅРѕ СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 2 СЃРёРјРІРѕР»Р°')
-            return
-
-        if len(author_lastname) < 2:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р¤Р°РјРёР»РёСЏ Р°РІС‚РѕСЂР° РґРѕР»Р¶РЅР° СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 2 СЃРёРјРІРѕР»Р°')
-            return
-
-        # РЎРѕР·РґР°РµРј СЌРєР·РµРјРїР»СЏСЂ РјРµРЅРµРґР¶РµСЂР° Р‘Р”
-        db_manager = DatabaseManager()
-
-        try:
-            # РџРѕР»СѓС‡Р°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚РµРєСѓС‰РµР№ РєРЅРёРіРµ РїРµСЂРµРґ РёР·РјРµРЅРµРЅРёРµРј
-            loaddata = GetData()
-            old_book_info = loaddata.get_info_about_books(flag=True, book_name=self.current_edit_book_name)
-
-            if not old_book_info:
-                QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ')
-                return
-
-            old_book_info = old_book_info[0]
-            old_book_name = old_book_info['name_book']
-            old_formats = old_book_info['formats']
-
-            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ
-            db_manager.update_book(self.current_edit_book_id, new_book_name, year)
-
-            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РІС‚РѕСЂРµ
-            db_manager.update_author(
-                self.current_edit_author_id,
-                firstname=author_firstname,
-                lastname=author_lastname,
-                middlename=author_middlename if author_middlename else None,
-                nickname=author_nickname if author_nickname else None
-            )
-
-            # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р»С‹ РєРЅРёРіРё, РµСЃР»Рё РёР·РјРµРЅРёР»РѕСЃСЊ РЅР°Р·РІР°РЅРёРµ
-            if old_book_name.lower() != new_book_name.lower():
-                base_dir = Path(__file__).parent.resolve()
-                books_dir = base_dir / "books"
-
-                for format_name in old_formats:
-                    # РЎС‚Р°СЂРѕРµ РёРјСЏ С„Р°Р№Р»Р°
-                    old_safe_name = old_book_name.replace(" ", "_").lower()
-                    old_filename = f"{old_safe_name}_{format_name}.{format_name}"
-                    old_path = books_dir / old_filename
-
-                    # РќРѕРІРѕРµ РёРјСЏ С„Р°Р№Р»Р°
-                    new_safe_name = new_book_name.replace(" ", "_").lower()
-                    new_filename = f"{new_safe_name}_{format_name}.{format_name}"
-                    new_path = books_dir / new_filename
-
-                    # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р»
-                    if old_path.exists():
-                        old_path.rename(new_path)
-
-            QMessageBox.information(self, 'РЈСЃРїРµС…', 'РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РєРЅРёРіРµ СѓСЃРїРµС€РЅРѕ РѕР±РЅРѕРІР»РµРЅР°')
-
-            # РћС‡РёС‰Р°РµРј РїРѕР»СЏ РІРІРѕРґР°
-            self.window_edit_book_name_book.clear()
-            self.window_edit_book_year.clear()
-            self.window_edit_book_firstname.clear()
-            self.window_edit_book_lastname.clear()
-            self.window_edit_book_middlename.clear()
-            self.window_edit_book_nickname.clear()
-
-            # РћР±РЅРѕРІР»СЏРµРј С‚РµРєСѓС‰РµРµ РёРјСЏ РєРЅРёРіРё
-            self.current_edit_book_name = new_book_name
-
-            # Р’РѕР·РІСЂР°С‰Р°РµРјСЃСЏ РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ
-            self.show_main_window()
-
-            # РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє РєРЅРёРі
-            self.search_books()
-
-        except Exception as e:
-            QMessageBox.critical(self, 'РћС€РёР±РєР°', f'РћС€РёР±РєР°: {str(e)}')
 
 
 # Функция получения пути до файла
@@ -477,26 +367,83 @@ class MyApp(QMainWindow, Ui_MainWindow):
             for format in el["formats"]:  # Проходимся по форматам книги
                 item = QListWidgetItem()
                 item_widget = QWidget()
-                item_widget.setStyleSheet("color: black; border: 0px; font: 20px")
+                # item_widget.setStyleSheet("color: black; border-bottom: 5px solid black; font: 20px")
+                item_widget.setStyleSheet("""
+                #itemWidget {
+                    border-bottom: 2px solid #A264F3;
+                    border-top: none;
+                    border-left: none;
+                    border-right: none;
+                    border-radius: 5px;
+                    padding: 5px;
+                    margin: 2px;            
+                }
+                #itemWidget:hover {
+                    border-bottom: 5px solid #A264F3;
+                    border-top: none;
+                    border-left: none;
+                    border-right: none;
+                    border-radius: 5px;
+                    padding: 5px;
+                    margin: 2px;
+                }
+                """)
+                item_widget.setObjectName("itemWidget")  # Добавьте эту строку
                 line_text = QLabel(f'{el["name"].capitalize()}')
                 line_empty = QLabel()
                 line_format = QLabel(f"{format}")
-                open_btn = QPushButton("От")
+
+                # open_btn = QPushButton("От")
+                # open_btn = QPushButton()
+                # open_btn.setToolTip("Открыть")
+                # open_btn.setCursor(Qt.PointingHandCursor)
+                # open_btn.setMaximumSize(50, 50)
+                # open_btn.setIcon(QIcon("eye.png"))
+
+                open_btn = HoverButton(self.close_eye_icon, self.open_eye_icon)
                 open_btn.setToolTip("Открыть")
                 open_btn.setCursor(Qt.PointingHandCursor)
                 open_btn.setMaximumSize(50, 50)
-                copy_btn = QPushButton("Ск")
+
+                # copy_btn = QPushButton("Ск")
+                # copy_btn.setToolTip("Скопировать")
+                # copy_btn.setMaximumSize(50, 50)
+                # copy_btn.setCursor(Qt.PointingHandCursor)
+
+                copy_btn = HoverButton(self.not_select_copy, self.select_copy)
                 copy_btn.setToolTip("Скопировать")
-                copy_btn.setMaximumSize(50, 50)
                 copy_btn.setCursor(Qt.PointingHandCursor)
-                edit_btn = QPushButton("Ред")
+                copy_btn.setMaximumSize(50, 50)
+
+                # edit_btn = QPushButton("Ред")
+                # edit_btn.setToolTip("Редактировать")
+                # edit_btn.setMaximumSize(50, 50)
+                # edit_btn.setCursor(Qt.PointingHandCursor)
+
+                
+                edit_btn = HoverButton(self.not_select_edit, self.select_edit)
                 edit_btn.setToolTip("Редактировать")
-                edit_btn.setMaximumSize(50, 50)
                 edit_btn.setCursor(Qt.PointingHandCursor)
-                delete_btn = QPushButton("Уд")
+                edit_btn.setMaximumSize(50, 50)
+
+                # delete_btn = QPushButton("Уд")
+                # delete_btn.setToolTip("Удалить")
+                # delete_btn.setMaximumSize(50, 50)
+                # delete_btn.setCursor(Qt.PointingHandCursor)
+
+                delete_btn = HoverButton(self.not_select_delete, self.select_delete)
                 delete_btn.setToolTip("Удалить")
-                delete_btn.setMaximumSize(50, 50)
                 delete_btn.setCursor(Qt.PointingHandCursor)
+                delete_btn.setMaximumSize(50, 50)
+
+                open_btn.setStyleSheet("border: none; ")
+                copy_btn.setStyleSheet("border: none; ")
+                edit_btn.setStyleSheet("border: none;")
+                delete_btn.setStyleSheet("border: none;")
+                line_format.setStyleSheet("border: none; font: 20px")
+                line_empty.setStyleSheet("border: none;")
+                line_text.setStyleSheet("border: none; font: 20px")
+
                 file_name = ""
                 for ch in el["name"]:
                     if ch == " ":
@@ -833,13 +780,17 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.main_window_tags.clear()
 
         self.main_window_tags.setHeaderLabels(["Категории", "Книги"])
-        self.main_window_tags.setColumnWidth(0, 160)
+        self.main_window_tags.setColumnWidth(0, 250)
 
         root_standart_category = QTreeWidgetItem(self.main_window_tags)
         root_standart_category.setText(0, "Стандартные")
 
+        root_standart_category.setIcon(0, QIcon("icon_folder.png"))
+
         root_user_category = QTreeWidgetItem(self.main_window_tags)
         root_user_category.setText(0,"Пользовательские")
+
+        root_user_category.setIcon(0, QIcon("icon_folder.png"))
 
         # Обработка для стандартных категорий
         list_standart_category = ["Жанры", "Года", "Автор"]
@@ -847,12 +798,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
         for el in list_standart_category:
             standart_category = QTreeWidgetItem(root_standart_category)
             standart_category.setText(0, f"{el}")
+            standart_category.setIcon(0, QIcon("icon_folder.png"))
 
             if el == "Жанры":
                 all_genres = ld.get_info_about_genres(full=True, flag=False)
                 for genre in all_genres:
                     genre_category = QTreeWidgetItem(standart_category)
                     genre_category.setText(0, genre["Name_genre"])
+                    genre_category.setIcon(0, QIcon("icon_folder.png"))
                     books_with_this_genre = ld.get_books_by_name_genre(genre["Name_genre"])
                     for book_with_genre in books_with_this_genre:
                         book_genre = QTreeWidgetItem(genre_category)
@@ -861,12 +814,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         book_genre.setData(1, Qt.UserRole + 1, book_with_genre[1])
                         book_genre.setData(1, Qt.UserRole + 2, book_with_genre[2])
                         book_genre.setData(1, Qt.UserRole + 3, book_with_genre[3])
+                        book_genre.setIcon(1, QIcon("icon_book.png"))
 
             elif el == "Года":            
                 unique_years = ld.get_unique_years()
                 for year in unique_years:
                     year_category = QTreeWidgetItem(standart_category)
                     year_category.setText(0, f"{year}")
+                    year_category.setIcon(0, QIcon("icon_folder.png"))
             elif el == "Автор":
                 authors = ld.get_info_about_authors(author={},flag=False)
                 for author in authors:
@@ -879,11 +834,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
                                 name += partname + " "
                         index += 1    
                         author_category.setText(0, f"{name}")
+                        author_category.setIcon(0, QIcon("icon_folder.png"))
 
         # Обработка для тегов
         for tag in all_tags:
             user_category = QTreeWidgetItem(root_user_category)
             user_category.setText(0, f"{tag['Name_tag'].capitalize()}")
+            user_category.setIcon(0, QIcon("icon_folder.png"))
             search_tag = tag['Name_tag']
             books = ld.get_books_by_name_tag(search_tag)
             for book in books:
@@ -893,6 +850,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 book_with_tag.setData(1, Qt.UserRole + 1, book[1])
                 book_with_tag.setData(1, Qt.UserRole + 2, book[2])
                 book_with_tag.setData(1, Qt.UserRole + 3, book[3])
+                book_with_tag.setIcon(1, QIcon("icon_book.png"))
 
     def on_item_double_clicked(self, item, column):
         if column == 1:
@@ -906,15 +864,146 @@ class MyApp(QMainWindow, Ui_MainWindow):
             print(f"Автор: {book_author}")
             print(f"Год: {book_date}")
 
+    def open_edit_window(self, book_name):
+        self.current_edit_book_name = book_name
+        loaddata = GetData()
+        book_info = loaddata.get_info_about_books(flag=True, book_name=book_name)
 
+        if book_info:
+            info = book_info[0]
+            self.window_edit_book_name_book.setText(info['name_book'])
+            self.window_edit_book_year.setText(str(info['year']))
+            self.window_edit_book_firstname.setText(info['firstname'])
+            self.window_edit_book_lastname.setText(info['lastname'])
+            self.window_edit_book_middlename.setText(info['middlename'] if info['middlename'] else "")
+            self.window_edit_book_nickname.setText(info['nickname'] if info['nickname'] else "")
 
+            # РЎРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РёР№ ID РєРЅРёРіРё РґР»СЏ РїРѕСЃР»РµРґСѓСЋС‰РµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ
+            self.current_edit_book_id = info['id_book']
+            self.current_edit_author_id = info['id_author']
 
+            self.stackedWidget.setCurrentIndex(2)  # РџРµСЂРµРєР»СЋС‡Р°РµРјСЃСЏ РЅР° РѕРєРЅРѕ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+        else:
+            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ')
 
+    def edit_book(self):
+        # РџРѕР»СѓС‡Р°РµРј РґР°РЅРЅС‹Рµ РёР· РїРѕР»РµР№ РІРІРѕРґР°
+        new_book_name = self.window_edit_book_name_book.text().strip()
+        year = self.window_edit_book_year.text().strip()
+        author_firstname = self.window_edit_book_firstname.text().strip()
+        author_lastname = self.window_edit_book_lastname.text().strip()
+        author_middlename = self.window_edit_book_middlename.text().strip()
+        author_nickname = self.window_edit_book_nickname.text().strip()
 
+        # Р’Р°Р»РёРґР°С†РёСЏ РґР°РЅРЅС‹С…
+        if not new_book_name:
+            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РєРЅРёРіРё')
+            return
+        try:
+            year = int(year)
+            if year <= 0 or year >= 3000:
+                raise ValueError
+        except ValueError:
+            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ РіРѕРґ РёР·РґР°РЅРёСЏ (РѕС‚ 1 РґРѕ 2999)')
+            return
 
+        if not author_firstname or not author_lastname:
+            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РёРјСЏ Рё С„Р°РјРёР»РёСЋ Р°РІС‚РѕСЂР°')
+            return
 
+        if len(author_firstname) < 2:
+            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РРјСЏ Р°РІС‚РѕСЂР° РґРѕР»Р¶РЅРѕ СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 2 СЃРёРјРІРѕР»Р°')
+            return
 
+        if len(author_lastname) < 2:
+            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р¤Р°РјРёР»РёСЏ Р°РІС‚РѕСЂР° РґРѕР»Р¶РЅР° СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 2 СЃРёРјРІРѕР»Р°')
+            return
+
+        # РЎРѕР·РґР°РµРј СЌРєР·РµРјРїР»СЏСЂ РјРµРЅРµРґР¶РµСЂР° Р‘Р”
+        db_manager = DatabaseManager()
+
+        try:
+            # РџРѕР»СѓС‡Р°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚РµРєСѓС‰РµР№ РєРЅРёРіРµ РїРµСЂРµРґ РёР·РјРµРЅРµРЅРёРµРј
+            loaddata = GetData()
+            old_book_info = loaddata.get_info_about_books(flag=True, book_name=self.current_edit_book_name)
+
+            if not old_book_info:
+                QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ')
+                return
+
+            old_book_info = old_book_info[0]
+            old_book_name = old_book_info['name_book']
+            old_formats = old_book_info['formats']
+
+            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ
+            db_manager.update_book(self.current_edit_book_id, new_book_name, year)
+
+            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РІС‚РѕСЂРµ
+            db_manager.update_author(
+                self.current_edit_author_id,
+                firstname=author_firstname,
+                lastname=author_lastname,
+                middlename=author_middlename if author_middlename else None,
+                nickname=author_nickname if author_nickname else None
+            )
+
+            # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р»С‹ РєРЅРёРіРё, РµСЃР»Рё РёР·РјРµРЅРёР»РѕСЃСЊ РЅР°Р·РІР°РЅРёРµ
+            if old_book_name.lower() != new_book_name.lower():
+                base_dir = Path(__file__).parent.resolve()
+                books_dir = base_dir / "books"
+
+                for format_name in old_formats:
+                    # РЎС‚Р°СЂРѕРµ РёРјСЏ С„Р°Р№Р»Р°
+                    old_safe_name = old_book_name.replace(" ", "_").lower()
+                    old_filename = f"{old_safe_name}_{format_name}.{format_name}"
+                    old_path = books_dir / old_filename
+
+                    # РќРѕРІРѕРµ РёРјСЏ С„Р°Р№Р»Р°
+                    new_safe_name = new_book_name.replace(" ", "_").lower()
+                    new_filename = f"{new_safe_name}_{format_name}.{format_name}"
+                    new_path = books_dir / new_filename
+
+                    # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р»
+                    if old_path.exists():
+                        old_path.rename(new_path)
+
+            QMessageBox.information(self, 'РЈСЃРїРµС…', 'РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РєРЅРёРіРµ СѓСЃРїРµС€РЅРѕ РѕР±РЅРѕРІР»РµРЅР°')
+
+            # РћС‡РёС‰Р°РµРј РїРѕР»СЏ РІРІРѕРґР°
+            self.window_edit_book_name_book.clear()
+            self.window_edit_book_year.clear()
+            self.window_edit_book_firstname.clear()
+            self.window_edit_book_lastname.clear()
+            self.window_edit_book_middlename.clear()
+            self.window_edit_book_nickname.clear()
+
+            # РћР±РЅРѕРІР»СЏРµРј С‚РµРєСѓС‰РµРµ РёРјСЏ РєРЅРёРіРё
+            self.current_edit_book_name = new_book_name
+
+            # Р’РѕР·РІСЂР°С‰Р°РµРјСЃСЏ РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ
+            self.show_main_window()
+
+            # РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє РєРЅРёРі
+            self.search_books()
+
+        except Exception as e:
+            QMessageBox.critical(self, 'РћС€РёР±РєР°', f'РћС€РёР±РєР°: {str(e)}')
+
+class HoverButton(QPushButton):
+    def __init__(self, normal_icon, hover_icon, parent=None):
+        super().__init__(parent)
+        self.normal_icon = normal_icon
+        self.hover_icon = hover_icon
+        self.setIconSize(QSize(35, 35))
+        self.setIcon(normal_icon)
         
+    def enterEvent(self, event):
+        self.setIcon(self.hover_icon)
+        super().enterEvent(event)
+        
+    def leaveEvent(self, event):
+        self.setIcon(self.normal_icon)
+        super().leaveEvent(event)
 
 
 
