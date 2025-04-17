@@ -1194,6 +1194,32 @@ class MyApp(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, 'Ошибка', 'Неизвестная команда')
             return    
 
+    def open_edit_window(self, book_name):
+
+        self.load_tags_and_genre_to_window_edit_book()
+
+        self.current_edit_book_name = book_name
+        loaddata = GetData()
+        book_info = loaddata.get_info_about_books(flag=True, book_name=book_name)
+
+        if book_info:
+            info = book_info[0]
+            self.window_edit_book_name_book.setText(info['name_book'])
+            self.window_edit_book_year.setText(str(info['year']))
+            self.window_edit_book_firstname.setText(info['firstname'])
+            self.window_edit_book_lastname.setText(info['lastname'])
+            self.window_edit_book_middlename.setText(info['middlename'] if info['middlename'] else "")
+            self.window_edit_book_nickname.setText(info['nickname'] if info['nickname'] else "")
+
+            # РЎРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РёР№ ID РєРЅРёРіРё РґР»СЏ РїРѕСЃР»РµРґСѓСЋС‰РµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ
+            self.current_edit_book_id = info['id_book']
+            self.current_edit_author_id = info['id_author']
+
+            self.stackedWidget.setCurrentIndex(2)  # РџРµСЂРµРєР»СЋС‡Р°РµРјСЃСЏ РЅР° РѕРєРЅРѕ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+        else:
+            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ')
+
+
     def edit_book(self):
         # РџРѕР»СѓС‡Р°РµРј РґР°РЅРЅС‹Рµ РёР· РїРѕР»РµР№ РІРІРѕРґР°
         new_book_name = self.window_edit_book_name_book.text().strip()
