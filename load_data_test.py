@@ -456,6 +456,114 @@ class GetData:
         finally:
             if self.conn:
                 self.close_connection()
-                
+
+    def statistic_1(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    g.ID_genre,
+                    g.Name_genre,
+                    COUNT(bg.ID_book) AS Book_Count
+                FROM 
+                    Genres g
+                INNER JOIN 
+                    Books_Genres bg ON g.ID_genre = bg.ID_genre
+                GROUP BY 
+                    g.ID_genre, g.Name_genre
+                ORDER BY 
+                    Book_Count DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()                       
+
+    def statistic_1_2(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    t.ID_tag,
+                    t.Name_tag,
+                    COUNT(bt.ID_book) AS Book_Count
+                FROM 
+                    Tags t
+                INNER JOIN 
+                    Books_Tags bt ON t.ID_tag = bt.ID_tag
+                GROUP BY 
+                    t.ID_tag, t.Name_tag
+                ORDER BY 
+                    Book_Count DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()                       
+
+    def statistic_2(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    a.ID_author,
+                    a.Name,
+                    a.Surname,
+                    a.Patronymic,
+                    a.Nickname,
+                    COUNT(ba.ID_book) AS Book_Count
+                FROM 
+                    Authors a
+                INNER JOIN 
+                    Books_Authors ba ON a.ID_author = ba.ID_author
+                GROUP BY 
+                    a.ID_author, a.Name, a.Surname, a.Patronymic, a.Nickname 
+                ORDER BY 
+                    Book_Count DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()   
+
+    def statistic_3(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    strftime('%Y', Date_add) AS year,
+                    strftime('%m', Date_add) AS month,
+                    COUNT(*) AS book_count
+                FROM 
+                    Books
+                GROUP BY 
+                    strftime('%Y', Date_add),
+                    strftime('%m', Date_add)
+                ORDER BY 
+                    year DESC,
+                    month DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()   
+
+
                 
 
