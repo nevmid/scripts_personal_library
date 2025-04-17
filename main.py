@@ -25,7 +25,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Устанавливаем имя программы      
         self.setWindowTitle("BookHive")
-        
+
         # Устанавливаем икноку для программы
         self.setWindowIcon(QIcon("logo.png"))
 
@@ -42,12 +42,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # При запуске отображаем все книги
         self.search_books()
-    
+
         self.add_book_button.clicked.connect(self.show_window_add_book)
         self.search_book_button.clicked.connect(self.show_window_search_book)
         self.add_category_button.clicked.connect(self.show_window_add_category)
         self.delete_category_button.clicked.connect(self.show_window_delete_category)
-        
+
         self.back_to_main_window_add_book.clicked.connect(self.show_main_window)
         self.back_to_main_window_edit_book.clicked.connect(self.show_main_window)
         self.back_to_main_window_search_book.clicked.connect(self.show_main_window)
@@ -75,7 +75,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
 
 
-# Функции открытия окон
+    # Функции открытия окон
     def show_window_add_book(self):
         # print("Add book")
 
@@ -84,32 +84,32 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.load_tags_and_genre_to_window_add_book()
 
         self.stackedWidget.setCurrentIndex(1)
-    
+
     def show_window_search_book(self):
         # print("Search book")
         self.load_tags_and_genre_to_window_search_book()
 
         self.stackedWidget.setCurrentIndex(3)
-    
+
     def show_window_add_category(self):
         # print("Add category")
 
         self.load_tag_to_window_add_tag()
-        
+
         self.stackedWidget.setCurrentIndex(5)
-    
+
     def show_window_delete_category(self):
         # print("Delete category")
 
         self.load_tag_to_window_delete_tag()
 
         self.stackedWidget.setCurrentIndex(4)
-    
+
     def show_main_window(self):
         self.stackedWidget.setCurrentIndex(0)
 
-#-------------------------------#
-# Функция добавления книги
+    #-------------------------------#
+    # Функция добавления книги
     def add_book(self, script=False, data=None):
 
         select_genres = []
@@ -269,7 +269,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         selected_tags.append({"name": name, "id": id_value})
                     elif parent.text(0) == "Жанры":
                         selected_genres.append({"name": name, "id": id_value, "code": code})
-        
+
         return selected_tags, selected_genres
 
         # print("Выбранные теги:", selected_tags)
@@ -277,7 +277,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
 
 
-# Функция получения пути до файла
+    # Функция получения пути до файла
     def open_file_dialog(self):
         # Открываем диалоговое окно выбора файла
         file_name, _ = QFileDialog.getOpenFileName(
@@ -286,7 +286,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             "",                    # Начальная директория
             "All Files (*);;Text Files (*.txt);;Python Files (*.py)"  # Фильтры файлов
         )
-        
+
         # Если файл выбран (не нажата отмена)
         if file_name:
 
@@ -299,7 +299,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
             self.window_add_file_path.setText(f"{file_name}")
 
-# Функция проерки существования файла БД
+    # Функция проерки существования файла БД
     def create_db(self):
         if os.path.exists("book_db.db"):
             print("Такой файл есть")
@@ -307,7 +307,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             setup_database("book_db.db")
             print("Такого файла нет")
 
-#   Функция поиска книги
+    #   Функция поиска книги
     def search_books(self, script=False, data=None):
 
         author = []
@@ -329,11 +329,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 id_tag = loaddata.get_id_tag(tag)
                 if not id_tag:
                     QMessageBox.warning(self, 'Ошибка', f'Тег "{tag}" не найден')
+                    loaddata.close_connection()
                     return
             for genre in genres:
                 id_genre = loaddata.get_id_genre(genre)
                 if not id_genre:
                     QMessageBox.warning(self, 'Ошибка', f'Жанр "{genre}" не найден')
+                    loaddata.close_connection()
                     return
             loaddata.close_connection()
         else:
@@ -423,10 +425,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 open_btn.clicked.connect(self.clickedLinePB)
                 delete_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
                 delete_btn.clicked.connect(self.clicked_delete)
-                
+
                 copy_btn.setObjectName(str(f"{file_name}_{format}.{format}"))
                 copy_btn.clicked.connect(self.clicked_copy)
-                
+
                 item_layout = QHBoxLayout()
                 item_layout.addWidget(line_text)
                 item_layout.addWidget(line_empty)
@@ -450,54 +452,88 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Запускаем файл
         os.startfile(books_dir / f"{push_button.objectName()}" )
-    
-    def clicked_delete(self):
+
+    def clicked_delete(self, script=False, data=None):
+
+        db_manager = DatabaseManager()
+
+        if script:
+            ld = GetData()
+            book_name = data.get('t')
+            if not book_name:
+                QMessageBox.warning(self, 'Ошибка', 'Необходимо указать название книги')
+                return
+            name, ext = os.path.splitext(book_name)
+            if not ext:
+                QMessageBox.warning(self, 'Ошибка', 'Необходимо указать формат ([Название].[формат])')
+                return
+            base_dir = Path(__file__).parent.resolve()
+            books_dir = base_dir / "books"
+            book_name_in_db = name.replace('_', ' ').lower()
+            f = ext[1:].strip()
+
+            ld.get_connection()
+            if not ld.get_id_book(book_name_in_db):
+                QMessageBox.warning(self, 'Ошибка', 'Книга не найдена')
+                ld.close_connection()
+                return
+            if not ld.get_id_formats(f):
+                QMessageBox.warning(self, 'Ошибка', 'Книга с данный форматом не найдена')
+                ld.close_connection()
+                return
+            ld.close_connection()
+            if not ld.get_info_about_formats(format_name=f, flag=True, book_name=book_name_in_db):
+                QMessageBox.warning(self, 'Ошибка', 'Книга с данный форматом не найдена')
+                return
+            db_manager.delete_book(book_name_in_db)
+            os.remove(books_dir / f"{name}_{f}.{f}")
+
+            QMessageBox.information(self, 'Удаление', 'Книга удалена')
+        else:
+            sender = self.sender()
+            push_button = self.findChild(QPushButton, sender.objectName())
+
+            # Получаем путь до текущей директории
+            base_dir = Path(__file__).parent.resolve()
+            books_dir = base_dir / "books"
+
+            full_dir = books_dir / f"{push_button.objectName()}"
+
+            book_name_in_db = push_button.objectName()
+
+            book_name_in_db.lower()
+
+            book_name_in_db = book_name_in_db[:-8]
+
+            print(book_name_in_db)
+            print(full_dir)
+
+            db_manager.delete_book(book_name_in_db)
+
+            os.remove(books_dir / f"{push_button.objectName()}")
+
+            # Выводсообщения о том что книги скопирована
+            QMessageBox.information(self, 'Удаление', 'Книга удалена')
+
+        self.search_books()
+
+    def clicked_copy(self):
         sender = self.sender()
         push_button = self.findChild(QPushButton, sender.objectName())
 
-        # Получаем путь до текущей директории
         base_dir = Path(__file__).parent.resolve()
         books_dir = base_dir / "books"
 
         full_dir = books_dir / f"{push_button.objectName()}"
-        
-        book_name_in_db = push_button.objectName()
 
-        book_name_in_db.lower()
+        mime_data = QMimeData()
+        mime_data.setUrls([QUrl.fromLocalFile(str(full_dir))])
 
-        book_name_in_db = book_name_in_db[:-8]
-
-        print(book_name_in_db)
-        print(full_dir)
-
-        db_manager = DatabaseManager()
-
-        db_manager.delete_book(book_name_in_db)
-
-        os.remove(books_dir / f"{push_button.objectName()}")
-
-        # Выводсообщения о том что книги скопирована
-        QMessageBox.information(self, 'Удаление', 'Книга удалена')
-
-        self.search_books()
-    
-    def clicked_copy(self):
-         sender = self.sender()
-         push_button = self.findChild(QPushButton, sender.objectName())
- 
-         base_dir = Path(__file__).parent.resolve()
-         books_dir = base_dir / "books"
- 
-         full_dir = books_dir / f"{push_button.objectName()}"
- 
-         mime_data = QMimeData()
-         mime_data.setUrls([QUrl.fromLocalFile(str(full_dir))])
- 
-         clipboard = QApplication.clipboard()
-         clipboard.setMimeData(mime_data)
+        clipboard = QApplication.clipboard()
+        clipboard.setMimeData(mime_data)
 
         # Вывод сообщения о том что книги скопирована
-         QMessageBox.information(self, 'Копирование', 'Книга скопирована')
+        QMessageBox.information(self, 'Копирование', 'Книга скопирована')
 
     def parse_fb2_metadata(self, path):
         try:
@@ -555,7 +591,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         except Exception as e:
             return {"Ошибка": str(e)}
-            
+
     def add_tag(self, script=False, data=None):
 
         ld = GetData()
@@ -585,12 +621,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
             if ld.get_id_tag(str(name_new_tag).lower()):
                 # Вывод сообщения о том что тег с такми название муже сущетвует
                 QMessageBox.information(self, 'Добавление тега', f"Тег с названием {name_new_tag} уже существует")
+                ld.close_connection()
                 return
             else:
                 dbm.add_tag(str(name_new_tag))
 
             ld.close_connection()
-        # Вывод сообщения о том что тег успешно добавлен
+            # Вывод сообщения о том что тег успешно добавлен
             QMessageBox.information(self, 'Добавление тега', f'Тег с названием {name_new_tag} добавлен')
         self.window_add_tag_name_tag.clear()
         self.load_tag_to_window_add_tag()
@@ -615,12 +652,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
         root_item.appendRow([main_el])
 
         self.window_add_tag_treeView.setModel(self.model)
-    
+
     def load_tag_to_window_delete_tag(self):
-        
+
         ld = GetData()
 
-        self.window_delete_tag_treeWidget.clear()  
+        self.window_delete_tag_treeWidget.clear()
 
         self.window_delete_tag_treeWidget.setColumnCount(2)
         self.window_delete_tag_treeWidget.setHeaderLabels(["Название Тег", "Статус удаления"])
@@ -634,7 +671,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
             # Добавляем чекбокс во вторую колонку
             item.setCheckState(1, Qt.Unchecked)  # По умолчанию не выбран
-        
+
             # Можно сохранить данные тега в item
             item.setData(0, Qt.UserRole, tag["ID_tag"])  # Сохраняем ID тега
 
@@ -703,7 +740,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def load_tags_and_genre_to_window_add_book(self):
 
         self.window_add_book_treeWidget.clear()
-        
+
         ld = GetData()
 
         # Полчуение всех тегов
@@ -730,7 +767,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             tag_in_tree.setText(0, f"{tag['Name_tag']}")
             tag_in_tree.setCheckState(1, 0)
             tag_in_tree.setData(0, Qt.UserRole, tag["ID_tag"])
-        
+
         for genre in all_genres:
             genre_in_tree = QTreeWidgetItem(root_genre_item)
             genre_in_tree.setText(0, f"{genre['Name_genre']}")
@@ -775,12 +812,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
     # Главное дерево виджетов
     def load_tree_main(self):
-        
+
         self.main_window_tags.clear()
 
     def on_item_double_clicked(self):
         print(2)
-    
+
     def on_item_clicked(self):
         print(1)
 
@@ -905,8 +942,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             self.delete_tags(script=True, data=result)
         elif (command_types[lang].get(command_type) == "delete"
               and command_types[lang].get(command_obj) == "book"):
-            # self.delete(script=True, data=result)
-            pass
+            self.clicked_delete(script=True, data=result)
         elif (command_types[lang].get(command_type) == "edit"
               and command_types[lang].get(command_obj) == "book"):
             pass
