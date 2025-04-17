@@ -125,7 +125,7 @@ font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
                <widget class="QTreeWidget" name="main_window_tags">
                 <property name="minimumSize">
                  <size>
-                  <width>350</width>
+                  <width>500</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -1303,6 +1303,152 @@ border: 3px solid rgb(99, 47, 255);</string>
        <attribute name="title">
         <string>Статистика</string>
        </attribute>
+       <layout class="QGridLayout" name="gridLayout_17">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_16">
+          <item row="1" column="1" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <spacer name="horizontalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_statistic_tag_genre">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(111, 125, 255);
+background-color: rgb(116, 106, 255);
+border-radius: 5px;
+padding: 5px 5px 5px 5px;
+margin: 5px 5px 5px 5px;
+color: white;
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+              </property>
+              <property name="text">
+               <string>Процент книг по тегам и жанрам</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_statistic_author">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(111, 125, 255);
+background-color: rgb(116, 106, 255);
+border-radius: 5px;
+padding: 5px 5px 5px 5px;
+margin: 5px 5px 5px 5px;
+color: white;
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+              </property>
+              <property name="text">
+               <string>Процент книг по авторам</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_10">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="count_books">
+            <property name="styleSheet">
+             <string notr="true">font: 15pt &quot;MS Shell Dlg 2&quot;;</string>
+            </property>
+            <property name="text">
+             <string>Общее количество книг:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label">
+            <property name="styleSheet">
+             <string notr="true">font: 25pt &quot;MS Shell Dlg 2&quot;;
+color: rgb(141, 91, 184);</string>
+            </property>
+            <property name="text">
+             <string>Статистика</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1" rowspan="2" colspan="2">
+           <widget class="QStackedWidget" name="stackedWidget_2">
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
+            <widget class="QWidget" name="page_2">
+             <layout class="QGridLayout" name="gridLayout_18">
+              <item row="0" column="0">
+               <widget class="QWidget" name="widget_1" native="true"/>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="page_3">
+             <layout class="QGridLayout" name="gridLayout_19">
+              <item row="0" column="0">
+               <widget class="QWidget" name="widget_2" native="true"/>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <spacer name="horizontalSpacer_7">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="3" column="0">
+           <widget class="QWidget" name="widget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>450</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
