@@ -338,7 +338,7 @@ class GetData:
                 id_format = self.get_id_formats(format_name)
 
                 cursor.execute("SELECT ID FROM Books_Formats WHERE ID_book = ? AND ID_format = ?",
-                               [id_book, id_format])
+                               [id_book[0][0], id_format[0][0]])
 
             else:
                 query = "SELECT * FROM Formats WHERE Name_format = ?"

@@ -3,7 +3,8 @@ import os
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QMimeData, QUrl, QSize
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout, QTreeWidget, QTreeWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, \
+    QPushButton, QHBoxLayout, QTreeWidget, QTreeWidgetItem, QVBoxLayout
 from create_db import setup_database
 from main_window import Ui_MainWindow
 
@@ -525,39 +526,67 @@ class MyApp(QMainWindow, Ui_MainWindow):
             # Запускаем файл
             os.startfile(books_dir / f"{push_button.objectName()}" )
         
-    def clicked_delete(self):
-        sender = self.sender()
-        push_button = self.findChild(QPushButton, sender.objectName())
-
-        # Получаем путь до текущей директории
-        base_dir = Path(__file__).parent.resolve()
-        books_dir = base_dir / "books"
-
-        full_dir = books_dir / f"{push_button.objectName()}"
-        
-        book_name_in_db = push_button.objectName()
-
-        book_name_in_db.lower()
-
-        book_name_in_db = book_name_in_db[:-8]
-
-        print(book_name_in_db)
-        print(full_dir)
+    def clicked_delete(self, script=False, data=None):
 
         db_manager = DatabaseManager()
 
-        db_manager.delete_book(book_name_in_db)
+        if script:
+            ld = GetData()
+            book_name = data.get('t')
+            if not book_name:
+                QMessageBox.warning(self, 'Ошибка', 'Необходимо указать название книги')
+                return
+            name, ext = os.path.splitext(book_name)
+            if not ext:
+                QMessageBox.warning(self, 'Ошибка', 'Необходимо указать формат ([Название].[формат])')
+                return
+            base_dir = Path(__file__).parent.resolve()
+            books_dir = base_dir / "books"
+            book_name_in_db = name.replace('_', ' ').lower()
+            f = ext[1:].strip()
 
-        os.remove(books_dir / f"{push_button.objectName()}")
+            ld.get_connection()
+            if not ld.get_id_book(book_name_in_db):
+                QMessageBox.warning(self, 'Ошибка', 'Книга не найдена')
+                ld.close_connection()
+                return
+            if not ld.get_id_formats(f):
+                QMessageBox.warning(self, 'Ошибка', 'Книга с данный форматом не найдена')
+                ld.close_connection()
+                return
+            ld.close_connection()
+            if not ld.get_info_about_formats(format_name=f, flag=True, book_name=book_name_in_db):
+                QMessageBox.warning(self, 'Ошибка', 'Книга с данный форматом не найдена')
+                return
+            db_manager.delete_book(book_name_in_db)
+            os.remove(books_dir / f"{name}_{f}.{f}")
 
-        # Выводсообщения о том что книги скопирована
-        # QMessageBox.information(self, 'Удаление', 'Книга удалена')
+            QMessageBox.information(self, 'Удаление', 'Книга удалена')
+        else:
+            sender = self.sender()
+            push_button = self.findChild(QPushButton, sender.objectName())
 
-        # Перерисовываем дерево
-        self.load_tree_main()
+            # Получаем путь до текущей директории
+            base_dir = Path(__file__).parent.resolve()
+            books_dir = base_dir / "books"
 
-        # Создаем звук
-        self.useClick()
+            full_dir = books_dir / f"{push_button.objectName()}"
+
+            book_name_in_db = push_button.objectName()
+
+            book_name_in_db.lower()
+
+            book_name_in_db = book_name_in_db[:-8]
+
+            print(book_name_in_db)
+            print(full_dir)
+
+            db_manager.delete_book(book_name_in_db)
+
+            os.remove(books_dir / f"{push_button.objectName()}")
+
+            # Выводсообщения о том что книги скопирована
+            QMessageBox.information(self, 'Удаление', 'Книга удалена')
 
         self.search_books()
 
@@ -1194,8 +1223,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             self.delete_tags(script=True, data=result)
         elif (command_types[lang].get(command_type) == "delete"
               and command_types[lang].get(command_obj) == "book"):
-            # self.delete(script=True, data=result)
-            pass
+            self.clicked_delete(script=True, data=result)
         elif (command_types[lang].get(command_type) == "edit"
               and command_types[lang].get(command_obj) == "book"):
             pass
