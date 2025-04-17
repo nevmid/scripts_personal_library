@@ -7,6 +7,10 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox,
 from create_db import setup_database
 from main_window import Ui_MainWindow
 
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
 # from save_from_main import DatabaseManager, copy_book_file
 from save import DatabaseManager, copy_book_file
 
@@ -102,6 +106,11 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.window_edit_book_btn_edit.clicked.connect(self.edit_book)
 
         self.main_window_button.clicked.connect(self.parse_line)
+
+        ######
+        self.tabWidget.currentChanged.connect(self.changeTab)
+        self.btn_statistic_tag_genre.clicked.connect(self.show_statistic_book_tags_genre)
+        self.btn_statistic_author.clicked.connect(self.show_statistic_book_author)
 
 # Функции открытия окон
     def show_window_add_book(self):
@@ -1333,6 +1342,181 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Устанавливаем контент и воспроизводим
          self.player.setMedia(content)
          self.player.play()
+
+    def calculating_statistics(self):
+        # Общее количество книг
+        ld = GetData()
+        count_books = str(len(ld.get_books({})))
+        self.count_books.clear()
+        self.count_books.setText(f"Общее количество книг: {count_books}")
+
+        # Статистика процента книг по жанрам и тегам
+        info_genre_for_statistic = ld.statistic_1()
+        use_genre = [genre[1] for genre in info_genre_for_statistic]
+        count_book_fro_use_genre = [genre[2] for genre in info_genre_for_statistic]
+        info_tag_for_statistic = ld.statistic_1_2()
+        use_genre = use_genre + [tag[1] for tag in info_tag_for_statistic]
+        count_book_fro_use_genre = count_book_fro_use_genre + [tag[2] for tag in info_tag_for_statistic]
+        # Очищаем текущий макет (если есть)
+        if self.widget_1.layout():
+            layout = self.widget_1.layout()
+            while layout.count():
+                item = layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+        else:
+            layout = QVBoxLayout(self.widget_1)
+        fig = Figure(figsize=(5, 5), dpi=150, facecolor='none')
+        ax = fig.add_subplot(111)
+        labels = use_genre
+        sizes = count_book_fro_use_genre
+        # Настройки шрифтов
+        font_props = {
+            'fontsize': 6,          # Размер шрифта для labels
+            'color': 'black',       # Цвет текста
+        }
+        # Параметры для autopct (процентных значений)
+        autopct_props = {
+            'fontsize': 5,          # Размер шрифта для процентов
+            'color': 'white',       # Цвет текста процентов
+            'weight': 'bold'        # Жирный шрифт для лучшей читаемости
+        }
+        wedges, texts, autotexts = ax.pie(
+            sizes, 
+            labels=labels, 
+            autopct='%1.1f%%',
+            startangle=90,
+            textprops=font_props,  
+            pctdistance=0.85       
+        )
+        for autotext in autotexts:
+            autotext.set_fontsize(autopct_props['fontsize'])
+            autotext.set_color(autopct_props['color'])
+            autotext.set_weight(autopct_props['weight'])
+        ax.set_title("Процент книг по жанрам и тегам", fontsize=8, pad=10)
+        fig.tight_layout()
+        canvas = FigureCanvas(fig)
+        layout.addWidget(canvas)
+        self.widget_1.setLayout(layout)
+
+        # Статистика процента книг по авторам
+        info_author_for_statistic = ld.statistic_2()
+        use_author = [f"{author[1]} {author[2]} {author[3]} {author[4]}" for author in info_author_for_statistic]
+        count_book_for_use_author = [author[5] for author in info_author_for_statistic]
+        # Очищаем текущий макет (если есть)
+        if self.widget_2.layout():
+            layout = self.widget_2.layout()
+            while layout.count():
+                item = layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+        else:
+            layout = QVBoxLayout(self.widget_2)
+        fig = Figure(figsize=(5, 5), dpi=150, facecolor='none')
+        ax = fig.add_subplot(111)
+        labels = use_author
+        sizes = count_book_for_use_author
+        # Настройки шрифтов
+        font_props = {
+            'fontsize': 6,          
+            'color': 'black',       
+        }
+        autopct_props = {
+            'fontsize': 5,          
+            'color': 'white',       
+            'weight': 'bold'        
+        }
+        wedges, texts, autotexts = ax.pie(
+            sizes, 
+            labels=labels, 
+            autopct='%1.1f%%',
+            startangle=90,
+            textprops=font_props,  
+            pctdistance=0.85       
+        )
+        for autotext in autotexts:
+            autotext.set_fontsize(autopct_props['fontsize'])
+            autotext.set_color(autopct_props['color'])
+            autotext.set_weight(autopct_props['weight'])
+        ax.set_title("Процент книг по авторам", fontsize=8, pad=10)
+        fig.tight_layout()
+        canvas = FigureCanvas(fig)
+        layout.addWidget(canvas)
+        self.widget_2.setLayout(layout)
+
+        # Статистика добавленных книг по годам и месяцам
+        print(ld.statistic_3())
+        try:
+            # Получаем данные из БД
+            book_stats = ld.statistic_3()  # Предполагаем, что это метод, который возвращает данные как в вашем исходном запросе
+            
+            if not book_stats:
+                print("Нет данных для отображения")
+                return
+                
+            # Подготовка данных для графика
+            dates = [f"{row[0]}-{row[1]}" for row in book_stats]  # Год-месяц
+            counts = [row[2] for row in book_stats]  # Количество книг
+            
+            # Очищаем текущий макет (если есть)
+            if self.widget.layout():
+                layout = self.widget.layout()
+                while layout.count():
+                    item = layout.takeAt(0)
+                    if item.widget():
+                        item.widget().deleteLater()
+            else:
+                layout = QVBoxLayout(self.widget)
+                
+            # Создаем фигуру
+            fig = Figure(figsize=(5, 3), dpi=100, facecolor='none')
+            ax = fig.add_subplot(111)
+            
+            # Настройки шрифтов
+            font_props = {
+                'fontsize': 8,
+                'color': 'black'
+            }
+            
+            # Строим столбчатую диаграмму
+            bars = ax.bar(dates, counts, color='skyblue')
+            
+            # Добавляем значения на столбцы
+            for bar in bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{int(height)}',
+                        ha='center', va='bottom', fontsize=6)
+            
+            # Настройки осей
+            ax.set_xticks(range(len(dates)))
+            ax.set_xticklabels(dates, rotation=45, ha='right', fontsize=6)
+            ax.set_ylabel('Количество книг', fontdict=font_props)
+            ax.set_title("Статистика добавления книг по месяцам", fontsize=10, pad=10)
+            
+            # Улучшаем внешний вид
+            ax.grid(axis='y', linestyle='--', alpha=0.7)
+            fig.tight_layout()
+            
+            # Отображаем график
+            canvas = FigureCanvas(fig)
+            layout.addWidget(canvas)
+            self.widget.setLayout(layout)
+            
+        except Exception as e:
+            print(f"Ошибка при построении графика: {e}")
+
+    def changeTab(self, index):
+        if index == 1:
+            self.calculating_statistics()
+
+    def show_statistic_book_tags_genre(self):
+        self.stackedWidget_2.setCurrentIndex(0)
+
+    def show_statistic_book_author(self):
+        self.stackedWidget_2.setCurrentIndex(1)
+
+
 
 class HoverButton(QPushButton):
     def __init__(self, normal_icon, hover_icon, parent=None):
