@@ -1,12 +1,15 @@
 import sys
 import os
 
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+
 from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QMimeData, QUrl, QSize
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout, QTreeWidget, QTreeWidgetItem
 from create_db import setup_database
 from main_window import Ui_MainWindow
-from save import DatabaseManager, copy_book_file
+# from save import DatabaseManager, copy_book_file
+from save_from_main import DatabaseManager, copy_book_file
 from load_data_test import GetData
 import shutil
 from pathlib import Path  
@@ -24,6 +27,11 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.current_edit_book_id = None
         self.current_edit_author_id = None
         self.current_edit_book_name = None
+
+        self.useFirstSound = False
+
+        # Создаем медиаплеер
+        self.player = QMediaPlayer()
 
         self.setWindowIcon(QIcon("app_icon.ico"))  # или .png
 
@@ -94,11 +102,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
         #
         self.window_edit_book_btn_edit.clicked.connect(self.edit_book)
 
-
-
-
 # Функции открытия окон
     def show_window_add_book(self):
+        self.useClick()
+
         # print("Add book")
 
         # self.load_tree_main()
@@ -108,12 +115,18 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.stackedWidget.setCurrentIndex(1)
     
     def show_window_search_book(self):
+
+        self.useClick()
+
         # print("Search book")
         self.load_tags_and_genre_to_window_search_book()
 
         self.stackedWidget.setCurrentIndex(3)
     
     def show_window_add_category(self):
+
+        self.useClick()
+
         # print("Add category")
 
         self.load_tag_to_window_add_tag()
@@ -121,6 +134,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.stackedWidget.setCurrentIndex(5)
     
     def show_window_delete_category(self):
+
+        self.useClick()
+
         # print("Delete category")
 
         self.load_tag_to_window_delete_tag()
@@ -128,6 +144,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.stackedWidget.setCurrentIndex(4)
     
     def show_main_window(self):
+
+        self.useClick()
 
         self.load_tree_main()
 
@@ -272,8 +290,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # print("Выбранные теги:", selected_tags)
         # print("Выбранные жанры:", selected_genres)
 
-
-
 # Функция получения пути до файла
     def open_file_dialog(self):
         # Открываем диалоговое окно выбора файла
@@ -306,6 +322,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
 #   Функция поиска книги
     def search_books(self):
+
+        if self.useFirstSound:
+            self.useClick() 
+
+        self.useFirstSound = True
+
+
         
         if self.window_search_book_name_book.text() != '':
             book_name = self.window_search_book_name_book.text().lower()
@@ -362,8 +385,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.stackedWidget.setCurrentIndex(0)  ##### Поменять на вызов функции
 
     def load_books_to_list_widgets(self, dict_of_books):
-
         for el in dict_of_books:  # Проходимся по всем книгам
+            print("child: ",el)
             for format in el["formats"]:  # Проходимся по форматам книги
                 item = QListWidgetItem()
                 item_widget = QWidget()
@@ -511,7 +534,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
         os.remove(books_dir / f"{push_button.objectName()}")
 
         # Выводсообщения о том что книги скопирована
-        QMessageBox.information(self, 'Удаление', 'Книга удалена')
+        # QMessageBox.information(self, 'Удаление', 'Книга удалена')
+
+        # Перерисовываем дерево
+        self.load_tree_main()
+
+        # Создаем звук
+        self.useClick()
 
         self.search_books()
     
@@ -530,8 +559,18 @@ class MyApp(QMainWindow, Ui_MainWindow):
          clipboard = QApplication.clipboard()
          clipboard.setMimeData(mime_data)
 
+         self.useClick()
+
+        #  file_path = "click_1.mp3"
+        # # Создаем медиа контент из файла
+        #  url = QUrl.fromLocalFile(file_path)
+        #  content = QMediaContent(url)
+        # # Устанавливаем контент и воспроизводим
+        #  self.player.setMedia(content)
+        #  self.player.play()
+
         # Вывод сообщения о том что книги скопирована
-         QMessageBox.information(self, 'Копирование', 'Книга скопирована')
+        #  QMessageBox.information(self, 'Копирование', 'Книга скопирована')
 
     def parse_fb2_metadata(self, path):
         try:
@@ -763,8 +802,45 @@ class MyApp(QMainWindow, Ui_MainWindow):
             genre_in_tree.setData(0, Qt.UserRole, genre["ID_genre"])
             genre_in_tree.setData(0, Qt.UserRole + 1, genre["Code"])
 
+    def load_tags_and_genre_to_window_edit_book(self):
+        # self.window_search_book_treeWidget.clear()
+        self.window_edit_book_treeWidget.clear()
+
+        ld = GetData()
+
+        all_tags = ld.get_info_about_tags(full=True, flag=False)
+        # print(all_tags)
+
+        all_genres = ld.get_info_about_genres(full=True, flag=False)
+        # print(all_genres)
+
+        self.window_edit_book_treeWidget.setHeaderLabels(["Теги и жанры", "Статус поиска"])
+
+        self.window_edit_book_treeWidget.setColumnWidth(0, 350)
+
+        root_tags_item = QTreeWidgetItem(self.window_edit_book_treeWidget)
+        root_tags_item.setText(0, "Пользовательские теги")
+
+        root_genre_item = QTreeWidgetItem(self.window_edit_book_treeWidget)
+        root_genre_item.setText(0, "Жанры")
+
+        for tag in all_tags:
+            tag_in_tree = QTreeWidgetItem(root_tags_item)
+            tag_in_tree.setText(0, f"{tag['Name_tag']}")
+            tag_in_tree.setCheckState(1, 0)
+            tag_in_tree.setData(0, Qt.UserRole, tag["ID_tag"])
+
+        for genre in all_genres:
+            genre_in_tree = QTreeWidgetItem(root_genre_item)
+            genre_in_tree.setText(0, f"{genre['Name_genre']}")
+            genre_in_tree.setCheckState(1, 0)
+            genre_in_tree.setData(0, Qt.UserRole, genre["ID_genre"])
+            genre_in_tree.setData(0, Qt.UserRole + 1, genre["Code"])
+
     # Главное дерево виджетов
     def load_tree_main(self):
+
+        books_for_load = []
 
         ld = GetData()
 
@@ -808,20 +884,45 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     genre_category.setIcon(0, QIcon("icon_folder.png"))
                     books_with_this_genre = ld.get_books_by_name_genre(genre["Name_genre"])
                     for book_with_genre in books_with_this_genre:
-                        book_genre = QTreeWidgetItem(genre_category)
-                        book_genre.setText(1, book_with_genre[1]) 
-                        book_genre.setData(1, Qt.UserRole, book_with_genre[0])
-                        book_genre.setData(1, Qt.UserRole + 1, book_with_genre[1])
-                        book_genre.setData(1, Qt.UserRole + 2, book_with_genre[2])
-                        book_genre.setData(1, Qt.UserRole + 3, book_with_genre[3])
-                        book_genre.setIcon(1, QIcon("icon_book.png"))
+                        # Получение форматов книги
+                        formats_ = ld.get_books({"name": book_with_genre[1]})[0]["formats"]
+                        # print(f"formats: {formats_}")
+                        for format_ in formats_:
+                            book_genre = QTreeWidgetItem(genre_category)
+                            book_genre.setText(1, f"{book_with_genre[1]} {format_}") 
+                            book_genre.setData(1, Qt.UserRole, book_with_genre[0])
+                            book_genre.setData(1, Qt.UserRole + 1, book_with_genre[1])
+                            book_genre.setData(1, Qt.UserRole + 2, book_with_genre[2])
+                            book_genre.setData(1, Qt.UserRole + 3, book_with_genre[3])
+                            book_genre.setData(1, Qt.UserRole + 4, format_)
+                            book_genre.setIcon(1, QIcon("icon_book.png"))
 
             elif el == "Года":            
+
+                ld = GetData()
+
                 unique_years = ld.get_unique_years()
+                # Добавляем все года
                 for year in unique_years:
                     year_category = QTreeWidgetItem(standart_category)
                     year_category.setText(0, f"{year}")
                     year_category.setIcon(0, QIcon("icon_folder.png"))
+                    # Добавляем для текущего года книги
+                    books_with_year = ld.get_books_by_year(year)
+                    for book_with_year in books_with_year:
+                        # Получение форматов книги
+                        formats_ = ld.get_books({"name": book_with_year[1]})[0]["formats"]
+                        # print(f"formats: {formats_}")
+                        for format_ in formats_:
+                            book_year = QTreeWidgetItem(year_category)
+                            book_year.setText(1, f"{book_with_year[1]} {format_}") 
+                            book_year.setData(1, Qt.UserRole, book_with_year[0])
+                            book_year.setData(1, Qt.UserRole + 1, book_with_year[1])
+                            book_year.setData(1, Qt.UserRole + 2, book_with_year[2])
+                            book_year.setData(1, Qt.UserRole + 3, book_with_year[3])
+                            book_year.setData(1, Qt.UserRole + 4, format_)
+                            book_year.setIcon(1, QIcon("icon_book.png"))
+
             elif el == "Автор":
                 authors = ld.get_info_about_authors(author={},flag=False)
                 for author in authors:
@@ -835,6 +936,48 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         index += 1    
                         author_category.setText(0, f"{name}")
                         author_category.setIcon(0, QIcon("icon_folder.png"))
+                    
+                    author_filt = []
+                    if author[1] != None:
+                        author_filt.append(author[1])
+                    else:
+                        author_filt.append("")
+                    
+                    if author[2] != None:
+                        author_filt.append(author[2])
+                    else:
+                        author_filt.append("")
+                    
+                    if author[3] != None:
+                        author_filt.append(author[3])
+                    else:
+                        author_filt.append("")
+                    
+                    if author[4] != None:
+                        author_filt.append(author[4])
+                    else:
+                        author_filt.append("")
+
+                    filters = {"author": author_filt}
+                    books_with_author = ld.get_books(filters)
+
+                    for book_author_ in books_with_author:
+
+                        for formats in book_author_["formats"]:
+                            name_book_ = book_author_["name"]
+                            formats_ = formats
+                            id_book_ = ld.get_id_book(book_author_["name"])[0][0]
+                            
+                            book_author = QTreeWidgetItem(author_category)
+                            book_author.setText(1, f"{name_book_} {formats_}") 
+                            book_author.setData(1, Qt.UserRole, id_book_)
+                            book_author.setData(1, Qt.UserRole + 1, name_book_)
+
+                            # Пусть поля год и автор будут пустыми
+                            # book_author.setData(1, Qt.UserRole + 2, formats_)
+                            # book_author.setData(1, Qt.UserRole + 3, book_with_year[3])
+                            book_author.setData(1, Qt.UserRole + 4, formats_)
+                            book_author.setIcon(1, QIcon("icon_book.png"))
 
         # Обработка для тегов
         for tag in all_tags:
@@ -844,13 +987,21 @@ class MyApp(QMainWindow, Ui_MainWindow):
             search_tag = tag['Name_tag']
             books = ld.get_books_by_name_tag(search_tag)
             for book in books:
-                book_with_tag = QTreeWidgetItem(user_category)
-                book_with_tag.setText(1, book[1].capitalize())
-                book_with_tag.setData(1, Qt.UserRole, book[0])
-                book_with_tag.setData(1, Qt.UserRole + 1, book[1])
-                book_with_tag.setData(1, Qt.UserRole + 2, book[2])
-                book_with_tag.setData(1, Qt.UserRole + 3, book[3])
-                book_with_tag.setIcon(1, QIcon("icon_book.png"))
+                # Получение форматов книги
+                formats_ = ld.get_books({"name": book[1]})[0]["formats"]
+                # print(f"formats tags: {formats_}")
+                for format_ in formats_:
+                    book_with_tag = QTreeWidgetItem(user_category)
+                    book_with_tag.setText(1, f"{book[1].capitalize()} {format_}")
+                    book_with_tag.setData(1, Qt.UserRole, book[0])
+                    book_with_tag.setData(1, Qt.UserRole + 1, book[1])
+                    book_with_tag.setData(1, Qt.UserRole + 2, book[2])
+                    book_with_tag.setData(1, Qt.UserRole + 3, book[3])
+                    book_with_tag.setData(1, Qt.UserRole + 4, format_)
+                    book_with_tag.setIcon(1, QIcon("icon_book.png"))
+        
+
+        # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
 
     def on_item_double_clicked(self, item, column):
         if column == 1:
@@ -858,13 +1009,25 @@ class MyApp(QMainWindow, Ui_MainWindow):
             book_name = item.data(1, Qt.UserRole + 1)
             book_author = item.data(1, Qt.UserRole + 2)
             book_date = item.data(1, Qt.UserRole + 3)
+            book_format = item.data(1, Qt.UserRole + 4)
 
+            book = [{'name': book_name, 'formats': [book_format]}]
+
+            self.listWidget.clear()
+
+            self.load_books_to_list_widgets(book)
+            
+            # Получать значение по книге название и форматы и вызвать функцию для загрузки книги в основное поле для книг
             print(f"ID: {book_id}")
             print(f"Название: {book_name}")
             print(f"Автор: {book_author}")
             print(f"Год: {book_date}")
+            print(f"Формат: {book_format}")
 
     def open_edit_window(self, book_name):
+
+        self.load_tags_and_genre_to_window_edit_book()
+
         self.current_edit_book_name = book_name
         loaddata = GetData()
         book_info = loaddata.get_info_about_books(flag=True, book_name=book_name)
@@ -989,6 +1152,17 @@ class MyApp(QMainWindow, Ui_MainWindow):
         except Exception as e:
             QMessageBox.critical(self, 'РћС€РёР±РєР°', f'РћС€РёР±РєР°: {str(e)}')
 
+    def useClick(self):
+         file_path = "click_1.mp3"
+        
+        # Создаем медиа контент из файла
+         url = QUrl.fromLocalFile(file_path)
+         content = QMediaContent(url)
+        
+        # Устанавливаем контент и воспроизводим
+         self.player.setMedia(content)
+         self.player.play()
+
 class HoverButton(QPushButton):
     def __init__(self, normal_icon, hover_icon, parent=None):
         super().__init__(parent)
@@ -1004,8 +1178,6 @@ class HoverButton(QPushButton):
     def leaveEvent(self, event):
         self.setIcon(self.normal_icon)
         super().leaveEvent(event)
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
