@@ -70,6 +70,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Добавление обработчиков кликов по дереву
         self.main_window_tags.itemClicked.connect(self.on_item_clicked)
         self.main_window_tags.itemDoubleClicked.connect(self.on_item_double_clicked)
+        self.main_window_button.clicked.connect(self.parse_line)
 
 
 
@@ -109,15 +110,48 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
 #-------------------------------#
 # Функция добавления книги
-    def add_book(self):
-        # Получение данных из полей ввода
-        book_name = self.window_add_book_name_book.text().strip()
-        year = self.window_add_book_year.text().strip()
-        author_firstname = self.window_add_book_firstname.text().strip()
-        author_lastname = self.window_add_book_lastname.text().strip()
-        author_middlename = self.window_add_book_middlename.text().strip()
-        author_nickname = self.window_add_book_nickname.text().strip()
-        path_book = self.window_add_file_path.text().strip()
+    def add_book(self, script=False, data=None):
+
+        select_genres = []
+        select_tags = []
+
+        if script:
+            book_name = data.get('t', '')
+            year = data.get('y', '')
+            author_firstname = data.get('fn', '')
+            author_lastname = data.get('ln', '')
+            author_middlename = data.get('mn', '')
+            author_nickname = data.get('nn', '')
+            path_book = data.get('p', '')
+            genres_data = data.get('genres', [])
+            tags_data = data.get('tags', [])
+            ld = GetData()
+            ld.get_connection()
+            for tag in tags_data:
+                id_tag = ld.get_id_tag(tag)
+                if not id_tag:
+                    QMessageBox.warning(self, 'Ошибка', f'Тег "{tag}" не найден')
+                    return
+                select_tags.append(id_tag[0][0])
+            for genre in genres_data:
+                id_genre = ld.get_id_genre(genre)
+                if not id_genre:
+                    QMessageBox.warning(self, 'Ошибка', f'Жанр "{genre}" не найден')
+                    return
+                select_genres.append(id_genre[0][0])
+            ld.close_connection()
+
+        else:
+            book_name = self.window_add_book_name_book.text().strip()
+            year = self.window_add_book_year.text().strip()
+            author_firstname = self.window_add_book_firstname.text().strip()
+            author_lastname = self.window_add_book_lastname.text().strip()
+            author_middlename = self.window_add_book_middlename.text().strip()
+            author_nickname = self.window_add_book_nickname.text().strip()
+            path_book = self.window_add_file_path.text().strip()
+            tags_data, genres_data = self.get_select_tag_and_genre(tree_widget=self.window_add_book_treeWidget)
+            select_tags = [tag['id'] for tag in tags_data]
+            select_genres = [genre['id'] for genre in genres_data]
 
         # Валидация данных
         if not book_name:
@@ -154,7 +188,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, 'Ошибка', 'Поддерживаются только файлы с расширениями .fb2, .pdf, .txt')
             return
 
-        # Создаем экземпляр менеджера БД
         db_manager = DatabaseManager()
 
         try:
@@ -190,14 +223,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
             # 6. Копируем файл книги
             copy_book_file(path_book, book_name, format_name)
 
-            # 7. Получение выбранных тегов и жанров
-            select_tags, select_genre = self.get_select_tag_and_genre(tree_widget=self.window_add_book_treeWidget)
 
             for tag in select_tags:
-                db_manager.link_book_tags(id_book=book_id, id_tag=tag["id"])
+                db_manager.link_book_tags(id_book=book_id, id_tag=tag)
 
-            for genre in select_genre:
-                db_manager.link_book_genre(id_book=book_id, id_genre=genre["id"])
+            for genre in select_genres:
+                db_manager.link_book_genre(id_book=book_id, id_genre=genre)
 
             QMessageBox.information(self, 'Успех', 'Книга и автор успешно добавлены')
 
@@ -277,32 +308,56 @@ class MyApp(QMainWindow, Ui_MainWindow):
             print("Такого файла нет")
 
 #   Функция поиска книги
-    def search_books(self):
-        
-        if self.window_search_book_name_book.text() != '':
-            book_name = self.window_search_book_name_book.text().lower()
-        else:
-            book_name = None
+    def search_books(self, script=False, data=None):
 
         author = []
-
-        author.append(self.window_search_book_firstname.text())
-        author.append(self.window_search_book_lastname.text())
-        author.append(self.window_search_book_middlename.text())
-        author.append(self.window_search_book_nickname.text())
-
-        if self.window_search_book_year.text() != '':
-            year = self.window_search_book_year.text()
-        else:
-            year = None
-
-        selected_tags, selected_genres = self.get_select_tag_and_genre(tree_widget=self.window_search_book_treeWidget)
         tags = []
         genres = []
-        for tag in selected_tags:
-            tags.append(tag['name'])
-        for genre in selected_genres:
-            genres.append(genre['name'])
+        loaddata = GetData()
+
+        if script:
+            book_name = data.get('t')
+            author.append(data.get('fn', ''))
+            author.append(data.get('ln', ''))
+            author.append(data.get('mn', ''))
+            author.append(data.get('nn', ''))
+            year = data.get('y')
+            tags = data.get('tags', [])
+            genres = data.get('genres', [])
+            loaddata.get_connection()
+            for tag in tags:
+                id_tag = loaddata.get_id_tag(tag)
+                if not id_tag:
+                    QMessageBox.warning(self, 'Ошибка', f'Тег "{tag}" не найден')
+                    return
+            for genre in genres:
+                id_genre = loaddata.get_id_genre(genre)
+                if not id_genre:
+                    QMessageBox.warning(self, 'Ошибка', f'Жанр "{genre}" не найден')
+                    return
+            loaddata.close_connection()
+        else:
+            if self.window_search_book_name_book.text() != '':
+                book_name = self.window_search_book_name_book.text().lower()
+            else:
+                book_name = None
+
+            author.append(self.window_search_book_firstname.text())
+            author.append(self.window_search_book_lastname.text())
+            author.append(self.window_search_book_middlename.text())
+            author.append(self.window_search_book_nickname.text())
+
+            if self.window_search_book_year.text() != '':
+                year = self.window_search_book_year.text()
+            else:
+                year = None
+
+            selected_tags, selected_genres = self.get_select_tag_and_genre(tree_widget=self.window_search_book_treeWidget)
+
+            for tag in selected_tags:
+                tags.append(tag['name'])
+            for genre in selected_genres:
+                genres.append(genre['name'])
 
         # print(tags)
         # print(genres)
@@ -317,7 +372,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         }
 
-        loaddata = GetData()
         books = loaddata.get_books(filters)
 
         self.window_search_book_name_book.clear()
@@ -687,10 +741,119 @@ class MyApp(QMainWindow, Ui_MainWindow):
         print(1)
 
 
+    def parse_line(self):
+        # print(self.main_window_LineEdit.text())
+        command_types = {
+            'rus': {
+                'добавить': 'add',
+                'удалить': 'delete',
+                'редактировать': 'edit',
+                'найти': 'search',
+                'книгу': 'book',
+                'тег': 'tag'
+            },
+            'eng': {
+                'add': 'add',
+                'delete': 'delete',
+                'edit': 'edit',
+                'search': 'search',
+                'book': 'book',
+                'tag': 'tag'
+            }
+        }
+
+        KEY_MAP = {
+            "rus": {"н": "t", "и": "fn", "ф": "ln", "от": "mn", "нн": "nn", "г": "y", "п": "p",
+                    "жанры": "genres", "теги": "tags"},
+            "eng": {"t": "t", "fn": "fn", "ln": "ln", "mn": "mn", "nn": "nn", "y": "y", "p": "p",
+                    "genres": "genres", "tags": "tags"}
+        }
+
+        command = self.main_window_LineEdit.text().strip()
+        if not command:
+            return
+        parts = command.strip().split(' ', 2)
 
 
+        if len(parts) < 2:
+            QMessageBox.warning(self, 'Ошибка', 'Неполная команда')
+            return None
 
-        
+        command_type = parts[0].lower()
+        command_obj = parts[1].lower()
+        result = {}
+
+        lang = 'rus' if command_type in command_types['rus'] else 'eng'
+        if command_type not in command_types[lang] or command_obj not in command_types[lang]:
+            QMessageBox.warning(self, 'Ошибка', 'Неизвестная команда')
+            return None
+
+        if command_type in ('найти', 'search') and command_obj in ('книгу', 'book'):
+            if len(parts) < 3:
+                result = {'genres': [], 'tags': []}
+                self.search_books(script=True, data=result)
+                return 0
+
+        if len(parts) < 3:
+            QMessageBox.warning(self, 'Ошибка', 'Неполная команда')
+            return
+
+        params = parts[2]
+
+        # print(params)
+
+        data = {}
+        genres = []
+        tags = []
+        param_parts = []
+        current_part = []
+        in_quotes = False
+
+        for char in params:
+            if char == '"':
+                in_quotes = not in_quotes
+            elif char == ' ' and not in_quotes:
+                if current_part:
+                    param_parts.append(''.join(current_part))
+                    current_part = []
+                continue
+            current_part.append(char)
+
+        if current_part:
+            param_parts.append(''.join(current_part))
+        # print(param_parts)
+
+        for part in param_parts:
+            if '=' in part:
+                key, value = part.split('=', 1)
+                key = key.strip()
+                value = value.strip('"').strip()
+
+                # Обработка списков
+                if KEY_MAP[lang].get(key) == 'tags':
+                    tags = [t.strip() for t in value.split(',') if t.strip()]
+                elif KEY_MAP[lang].get(key) == 'genres':
+                    genres = [g.strip() for g in value.split(',') if g.strip()]
+                else:
+                    if value:
+                        mapped_key = KEY_MAP[lang].get(key)
+                        if mapped_key:
+                            data[mapped_key] = value
+        # print(data)
+        result = {
+            **data,
+            'genres': genres,
+            'tags': tags
+        }
+        # print(result)
+
+        if (command_types[lang].get(command_type) == "add"
+                and command_types[lang].get(command_obj) == "book"):
+            self.add_book(script=True, data=result)
+        elif (command_types[lang].get(command_type) == "search"
+              and command_types[lang].get(command_obj) == "book"):
+            self.search_books(script=True, data=result)
+
 
 
 
