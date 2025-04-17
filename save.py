@@ -206,7 +206,55 @@ class DatabaseManager:
         except sqlite3.Error as e:
              raise Exception(f"Ошибка при связывании тега и книги: {str(e)}")
 
- 
+     def update_book(self, book_id, new_name=None, new_year=None):
+        """РћР±РЅРѕРІР»СЏРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ"""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                if new_name:
+                    cursor.execute("""
+                         UPDATE Books 
+                         SET Name_book = ?
+                         WHERE Id_book = ?
+                     """, (new_name.lower(), book_id))
+                if new_year:
+                    cursor.execute("""
+                         UPDATE Books 
+                         SET Year_of_publication = ?
+                         WHERE Id_book = ?
+                     """, (new_year, book_id))
+        except sqlite3.Error as e:
+            raise Exception(f"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РєРЅРёРіРё: {str(e)}")
+    
+     def update_author(self, author_id, firstname=None, lastname=None, middlename=None, nickname=None):
+        """РћР±РЅРѕРІР»СЏРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РІС‚РѕСЂРµ"""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                updates = []
+                params = []
+
+                if firstname:
+                    updates.append("Name = ?")
+                    params.append(firstname)
+                if lastname:
+                    updates.append("Surname = ?")
+                    params.append(lastname)
+                if middlename:
+                    updates.append("Patronymic = ?")
+                    params.append(middlename)
+                if nickname:
+                    updates.append("Nickname = ?")
+                    params.append(nickname)
+
+                if updates:
+                    query = "UPDATE Authors SET " + ", ".join(updates) + " WHERE Id_author = ?"
+                    params.append(author_id)
+                    cursor.execute(query, params)
+        except sqlite3.Error as e:
+            raise Exception(f"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё Р°РІС‚РѕСЂР°: {str(e)}")
+
+
 def copy_book_file(source_path, book_name, format_name, books_dir="books"):
      """Копирует файл книги в целевую директорию"""
      try:
