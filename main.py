@@ -556,23 +556,42 @@ class MyApp(QMainWindow, Ui_MainWindow):
         except Exception as e:
             return {"Ошибка": str(e)}
             
-    def add_tag(self):
-        name_new_tag = self.window_add_tag_name_tag.text()
-        dbm = DatabaseManager()
+    def add_tag(self, script=False, data=None):
+
         ld = GetData()
-        # print(ld.get_id_tag(str(name_new_tag).lower()))
-        ld.get_connection()
-
-        if ld.get_id_tag(str(name_new_tag).lower()):
-            # Вывод сообщения о том что тег с такми название муже сущетвует
-            QMessageBox.information(self, 'Добавление ткга', f"Тэг с названием {name_new_tag} уже существует")
-            return
+        dbm = DatabaseManager()
+        if script:
+            added = False
+            name_new_tag = data.get('tags', [])
+            ld.get_connection()
+            for tag in name_new_tag:
+                id_tag = ld.get_id_tag(tag.lower())
+                if id_tag:
+                    QMessageBox.information(self, 'Добавление тега', f"Тег с названием {tag} уже существует")
+                    continue
+                else:
+                    dbm.add_tag(tag)
+                    added = True
+            ld.close_connection()
+            if added:
+                QMessageBox.information(self, 'Добавление тега', f"Теги успешно добавлены")
+            else:
+                QMessageBox.information(self, 'Добавление тега', f"Теги не добавлены")
         else:
-            dbm.add_tag(str(name_new_tag))
+            name_new_tag = self.window_add_tag_name_tag.text()
+            # print(ld.get_id_tag(str(name_new_tag).lower()))
+            ld.get_connection()
 
-        ld.close_connection()
+            if ld.get_id_tag(str(name_new_tag).lower()):
+                # Вывод сообщения о том что тег с такми название муже сущетвует
+                QMessageBox.information(self, 'Добавление тега', f"Тег с названием {name_new_tag} уже существует")
+                return
+            else:
+                dbm.add_tag(str(name_new_tag))
+
+            ld.close_connection()
         # Вывод сообщения о том что тег успешно добавлен
-        QMessageBox.information(self, 'Добавление тега', f'Тег с названием {name_new_tag} добавлен')
+            QMessageBox.information(self, 'Добавление тега', f'Тег с названием {name_new_tag} добавлен')
         self.window_add_tag_name_tag.clear()
         self.load_tag_to_window_add_tag()
 
@@ -619,39 +638,64 @@ class MyApp(QMainWindow, Ui_MainWindow):
             # Можно сохранить данные тега в item
             item.setData(0, Qt.UserRole, tag["ID_tag"])  # Сохраняем ID тега
 
-    def delete_tags(self):
+    def delete_tags(self, script=False, data=None):
 
         sv = DatabaseManager()
 
-        # Получаем количество элементов в treeWidget
-        item_count = self.window_delete_tag_treeWidget.topLevelItemCount()
-        
-        # Создаем список для хранения выбранных тегов
-        selected_tags = []
-        
-        # Перебираем все элементы
-        for i in range(item_count):
-            item = self.window_delete_tag_treeWidget.topLevelItem(i)
-            
-            # Проверяем, отмечен ли чекбокс (вторая колонка)
-            if item.checkState(1) == Qt.Checked:
-                # Получаем данные тега
-                tag_id = item.data(0, Qt.UserRole)  # ID тега
-                tag_name = item.text(0)             # Название тега
-                
-                # Добавляем в список выбранных тегов
-                selected_tags.append({
-                    'id': tag_id,
-                    'name': tag_name
-                })
-        
-        print("selected_tags")
-        print(selected_tags)
+        if script:
+            ld = GetData()
+            tags_data = data.get('tags', [])
+            selected_tags = []
+            deleted = False
+            ld.get_connection()
+            for tag in tags_data:
+                id_tag = ld.get_id_tag(tag.lower())
+                if not id_tag:
+                    QMessageBox.information(self, 'Удаление тега', f"Тег {tag} не существует")
+                    continue
+                else:
+                    selected_tags.append({
+                        'id': id_tag[0][0],
+                        'name': tag
+                    })
 
-        if selected_tags:
-            sv.delete_tags(selected_tags)
+            if selected_tags:
+                sv.delete_tags(selected_tags)
+                QMessageBox.information(self, 'Удаление тега', f"Теги удалены")
+            else:
+                QMessageBox.information(self, 'Удаление тега', f"Теги не были удалены")
+            ld.close_connection()
+
         else:
-            print("Не выбрано ни одного тега для удаления")
+            # Получаем количество элементов в treeWidget
+            item_count = self.window_delete_tag_treeWidget.topLevelItemCount()
+
+            # Создаем список для хранения выбранных тегов
+            selected_tags = []
+
+            # Перебираем все элементы
+            for i in range(item_count):
+                item = self.window_delete_tag_treeWidget.topLevelItem(i)
+
+                # Проверяем, отмечен ли чекбокс (вторая колонка)
+                if item.checkState(1) == Qt.Checked:
+                    # Получаем данные тега
+                    tag_id = item.data(0, Qt.UserRole)  # ID тега
+                    tag_name = item.text(0)             # Название тега
+
+                    # Добавляем в список выбранных тегов
+                    selected_tags.append({
+                        'id': tag_id,
+                        'name': tag_name
+                    })
+
+            print("selected_tags")
+            print(selected_tags)
+
+            if selected_tags:
+                sv.delete_tags(selected_tags)
+            else:
+                print("Не выбрано ни одного тега для удаления")
 
         self.load_tag_to_window_delete_tag()
 
@@ -777,7 +821,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         if len(parts) < 2:
             QMessageBox.warning(self, 'Ошибка', 'Неполная команда')
-            return None
+            return
 
         command_type = parts[0].lower()
         command_obj = parts[1].lower()
@@ -786,13 +830,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
         lang = 'rus' if command_type in command_types['rus'] else 'eng'
         if command_type not in command_types[lang] or command_obj not in command_types[lang]:
             QMessageBox.warning(self, 'Ошибка', 'Неизвестная команда')
-            return None
+            return
 
         if command_type in ('найти', 'search') and command_obj in ('книгу', 'book'):
             if len(parts) < 3:
                 result = {'genres': [], 'tags': []}
                 self.search_books(script=True, data=result)
-                return 0
+                return
 
         if len(parts) < 3:
             QMessageBox.warning(self, 'Ошибка', 'Неполная команда')
@@ -853,6 +897,22 @@ class MyApp(QMainWindow, Ui_MainWindow):
         elif (command_types[lang].get(command_type) == "search"
               and command_types[lang].get(command_obj) == "book"):
             self.search_books(script=True, data=result)
+        elif (command_types[lang].get(command_type) == "add"
+              and command_types[lang].get(command_obj) == "tag"):
+            self.add_tag(script=True, data=result)
+        elif (command_types[lang].get(command_type) == "delete"
+              and command_types[lang].get(command_obj) == "tag"):
+            self.delete_tags(script=True, data=result)
+        elif (command_types[lang].get(command_type) == "delete"
+              and command_types[lang].get(command_obj) == "book"):
+            # self.delete(script=True, data=result)
+            pass
+        elif (command_types[lang].get(command_type) == "edit"
+              and command_types[lang].get(command_obj) == "book"):
+            pass
+        else:
+            QMessageBox.warning(self, 'Ошибка', 'Неизвестная команда')
+            return
 
 
 

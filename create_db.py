@@ -247,20 +247,6 @@ def populate_genres_table(conn):
     cursor.executemany('INSERT INTO Genres (Name_genre, Code) VALUES (?, ?)', genres)
     conn.commit()
 
-# Функция для вставки данных о жанрах
-def insert_genres(conn, genres):
-    cursor = conn.cursor()
-    try:
-        cursor.executemany('''
-            INSERT INTO Genres (Name_genre, Code)
-            VALUES (?, ?)
-        ''', genres)
-        conn.commit()
-        print("Данные успешно добавлены!")
-    except sqlite3.IntegrityError as e:
-        print(f"Ошибка при добавлении данных: {e}")
-        conn.rollback()
-
 # Основная функция для создания и настройки базы данных
 def setup_database(db_name):
     conn = create_database(db_name)
@@ -276,7 +262,23 @@ def setup_database(db_name):
     # populate_genres_table(conn)
 
     insert_genres(conn, genres_data)
+
     return conn
+
+# Функция для вставки данных о жанрах
+def insert_genres(conn, genres):
+    cursor = conn.cursor()
+    try:
+        cursor.executemany('''
+            INSERT INTO Genres (Name_genre, Code)
+            VALUES (?, ?)
+        ''', genres)
+        conn.commit()
+        print("Данные успешно добавлены!")
+    except sqlite3.IntegrityError as e:
+        print(f"Ошибка при добавлении данных: {e}")
+        conn.rollback()
+
 
 # Пример использования
 if __name__ == "__main__":
