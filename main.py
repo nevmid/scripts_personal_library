@@ -41,7 +41,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # Устанавливаем имя программы      
         self.setWindowTitle("BookHive")
-        
+
         # Устанавливаем икноку для программы
         self.setWindowIcon(QIcon("logo.png"))
 
@@ -58,7 +58,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.select_delete = QIcon("select_delete.png")
         self.not_select_delete = QIcon("not_select_delete.png")
 
-        
+
         self.select_edit = QIcon("select_edit.png")
         self.not_select_edit = QIcon("not_select_edit.png")
 
@@ -75,12 +75,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         # При запуске загружаем дерево в главное окно
         self.load_tree_main()
-    
+
         self.add_book_button.clicked.connect(self.show_window_add_book)
         self.search_book_button.clicked.connect(self.show_window_search_book)
         self.add_category_button.clicked.connect(self.show_window_add_category)
         self.delete_category_button.clicked.connect(self.show_window_delete_category)
-        
+
         self.back_to_main_window_add_book.clicked.connect(self.show_main_window)
         self.back_to_main_window_edit_book.clicked.connect(self.show_main_window)
         self.back_to_main_window_search_book.clicked.connect(self.show_main_window)
@@ -113,7 +113,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.btn_statistic_tag_genre.clicked.connect(self.show_statistic_book_tags_genre)
         self.btn_statistic_author.clicked.connect(self.show_statistic_book_author)
 
-# Функции открытия окон
+    # Функции открытия окон
     def show_window_add_book(self):
         self.useClick()
 
@@ -127,22 +127,22 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.load_tags_and_genre_to_window_search_book()
 
         self.stackedWidget.setCurrentIndex(3)
-    
+
     def show_window_add_category(self):
         self.useClick()
 
 
         self.load_tag_to_window_add_tag()
-        
+
         self.stackedWidget.setCurrentIndex(5)
-    
+
     def show_window_delete_category(self):
         self.useClick()
 
         self.load_tag_to_window_delete_tag()
 
         self.stackedWidget.setCurrentIndex(4)
-    
+
     def show_main_window(self):
         self.useClick()
 
@@ -150,7 +150,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         self.stackedWidget.setCurrentIndex(0)
 
-# Функция добавления книги
+    # Функция добавления книги
     def add_book(self, script=False, data=None):
 
         select_genres = []
@@ -208,14 +208,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         if not author_firstname or not author_lastname:
             QMessageBox.warning(self, 'Ошибка', 'Введите имя и фамилию автора')
-            return
-
-        if len(author_firstname) < 2:
-            QMessageBox.warning(self, 'Ошибка', 'Имя автора должно содержать минимум 2 символа')
-            return
-
-        if len(author_lastname) < 2:
-            QMessageBox.warning(self, 'Ошибка', 'Фамилия автора должна содержать минимум 2 символа')
             return
 
         if not path_book:
@@ -310,10 +302,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         selected_tags.append({"name": name, "id": id_value})
                     elif parent.text(0) == "Жанры":
                         selected_genres.append({"name": name, "id": id_value, "code": code})
-        
+
         return selected_tags, selected_genres
 
-  # Функция получения пути до файла
+    # Функция получения пути до файла
     def open_file_dialog(self):
         # Открываем диалоговое окно выбора файла
         file_name, _ = QFileDialog.getOpenFileName(
@@ -322,7 +314,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             "",                    # Начальная директория
             "All Files (*);;Text Files (*.txt);;Python Files (*.py)"  # Фильтры файлов
         )
-        
+
         # Если файл выбран (не нажата отмена)
         if file_name:
 
@@ -334,8 +326,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 self.parse_fb2_metadata(file_name)
 
             self.window_add_file_path.setText(f"{file_name}")
-  
-  # Функция проерки существования файла БД
+
+    # Функция проерки существования файла БД
     def create_db(self):
         if os.path.exists("book_db.db"):
             print("Такой файл есть")
@@ -343,45 +335,59 @@ class MyApp(QMainWindow, Ui_MainWindow):
             setup_database("book_db.db")
             print("Такого файла нет")
 
- # Функция поиска книги
-    def search_books(self):
+    # Функция поиска книги
+    def search_books(self, script=False, data=None):
 
         author = []
         tags = []
         genres = []
         loaddata = GetData()
 
-        if self.useFirstSound:
-            self.useClick() 
-
-        self.useFirstSound = True
-
-
-        
-        if self.window_search_book_name_book.text() != '':
-            book_name = self.window_search_book_name_book.text().lower()
+        if script:
+            book_name = data.get('t')
+            author.append(data.get('fn', ''))
+            author.append(data.get('ln', ''))
+            author.append(data.get('mn', ''))
+            author.append(data.get('nn', ''))
+            year = data.get('y')
+            tags = data.get('tags', [])
+            genres = data.get('genres', [])
+            loaddata.get_connection()
+            for tag in tags:
+                id_tag = loaddata.get_id_tag(tag)
+                if not id_tag:
+                    QMessageBox.warning(self, 'Ошибка', f'Тег "{tag}" не найден')
+                    loaddata.close_connection()
+                    return
+            for genre in genres:
+                id_genre = loaddata.get_id_genre(genre)
+                if not id_genre:
+                    QMessageBox.warning(self, 'Ошибка', f'Жанр "{genre}" не найден')
+                    loaddata.close_connection()
+                    return
+            loaddata.close_connection()
         else:
-            book_name = None
+            if self.window_search_book_name_book.text() != '':
+                book_name = self.window_search_book_name_book.text().lower()
+            else:
+                book_name = None
 
-        author = []
+            author.append(self.window_search_book_firstname.text())
+            author.append(self.window_search_book_lastname.text())
+            author.append(self.window_search_book_middlename.text())
+            author.append(self.window_search_book_nickname.text())
 
-        author.append(self.window_search_book_firstname.text())
-        author.append(self.window_search_book_lastname.text())
-        author.append(self.window_search_book_middlename.text())
-        author.append(self.window_search_book_nickname.text())
+            if self.window_search_book_year.text() != '':
+                year = self.window_search_book_year.text()
+            else:
+                year = None
 
-        if self.window_search_book_year.text() != '':
-            year = self.window_search_book_year.text()
-        else:
-            year = None
+            selected_tags, selected_genres = self.get_select_tag_and_genre(tree_widget=self.window_search_book_treeWidget)
 
-        selected_tags, selected_genres = self.get_select_tag_and_genre(tree_widget=self.window_search_book_treeWidget)
-        tags = []
-        genres = []
-        for tag in selected_tags:
-            tags.append(tag['name'])
-        for genre in selected_genres:
-            genres.append(genre['name'])
+            for tag in selected_tags:
+                tags.append(tag['name'])
+            for genre in selected_genres:
+                genres.append(genre['name'])
 
         # print(tags)
         # print(genres)
@@ -396,7 +402,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         }
 
-        loaddata = GetData()
         books = loaddata.get_books(filters)
 
         self.window_search_book_name_book.clear()
@@ -516,16 +521,16 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 self.listWidget.setItemWidget(item, item_widget)
 
     def clickedLinePB(self):
-            sender = self.sender()
-            push_button = self.findChild(QPushButton, sender.objectName())
+        sender = self.sender()
+        push_button = self.findChild(QPushButton, sender.objectName())
 
-            # Получаем путь до текущей директории
-            base_dir = Path(__file__).parent.resolve()
-            books_dir = base_dir / "books"
+        # Получаем путь до текущей директории
+        base_dir = Path(__file__).parent.resolve()
+        books_dir = base_dir / "books"
 
-            # Запускаем файл
-            os.startfile(books_dir / f"{push_button.objectName()}" )
-        
+        # Запускаем файл
+        os.startfile(books_dir / f"{push_button.objectName()}" )
+
     def clicked_delete(self, script=False, data=None):
 
         db_manager = DatabaseManager()
@@ -585,27 +590,27 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
             os.remove(books_dir / f"{push_button.objectName()}")
 
-            # Выводсообщения о том что книги скопирована
             QMessageBox.information(self, 'Удаление', 'Книга удалена')
 
+        self.load_tree_main()
         self.search_books()
 
     def clicked_copy(self):
-         sender = self.sender()
-         push_button = self.findChild(QPushButton, sender.objectName())
- 
-         base_dir = Path(__file__).parent.resolve()
-         books_dir = base_dir / "books"
- 
-         full_dir = books_dir / f"{push_button.objectName()}"
- 
-         mime_data = QMimeData()
-         mime_data.setUrls([QUrl.fromLocalFile(str(full_dir))])
- 
-         clipboard = QApplication.clipboard()
-         clipboard.setMimeData(mime_data)
+        sender = self.sender()
+        push_button = self.findChild(QPushButton, sender.objectName())
 
-         self.useClick()
+        base_dir = Path(__file__).parent.resolve()
+        books_dir = base_dir / "books"
+
+        full_dir = books_dir / f"{push_button.objectName()}"
+
+        mime_data = QMimeData()
+        mime_data.setUrls([QUrl.fromLocalFile(str(full_dir))])
+
+        clipboard = QApplication.clipboard()
+        clipboard.setMimeData(mime_data)
+
+        self.useClick()
 
     def parse_fb2_metadata(self, path):
         try:
@@ -698,37 +703,37 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 dbm.add_tag(str(name_new_tag))
 
             ld.close_connection()
-        # Вывод сообщения о том что тег успешно добавлен
+            # Вывод сообщения о том что тег успешно добавлен
             QMessageBox.information(self, 'Добавление тега', f'Тег с названием {name_new_tag} добавлен')
         self.window_add_tag_name_tag.clear()
         self.load_tag_to_window_add_tag()
 
     def load_tag_to_window_add_tag(self):
 
-            ld = GetData()
-
-            self.model = QStandardItemModel()
-            self.model.setHorizontalHeaderLabels(['Название тегов'])  # Заголовки столбца
-
-            root_item = self.model.invisibleRootItem()
-
-            main_el = QStandardItem("Пользовательские теги")
-
-            for el in ld.get_info_about_tags(full=True, flag=False):
-
-                children = QStandardItem(f"{el['Name_tag']}")
-
-                main_el.appendRow([children])
-
-            root_item.appendRow([main_el])
-
-            self.window_add_tag_treeView.setModel(self.model)
-        
-    def load_tag_to_window_delete_tag(self):
-        
         ld = GetData()
 
-        self.window_delete_tag_treeWidget.clear()  
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(['Название тегов'])  # Заголовки столбца
+
+        root_item = self.model.invisibleRootItem()
+
+        main_el = QStandardItem("Пользовательские теги")
+
+        for el in ld.get_info_about_tags(full=True, flag=False):
+
+            children = QStandardItem(f"{el['Name_tag']}")
+
+            main_el.appendRow([children])
+
+        root_item.appendRow([main_el])
+
+        self.window_add_tag_treeView.setModel(self.model)
+
+    def load_tag_to_window_delete_tag(self):
+
+        ld = GetData()
+
+        self.window_delete_tag_treeWidget.clear()
 
         self.window_delete_tag_treeWidget.setColumnCount(2)
         self.window_delete_tag_treeWidget.setHeaderLabels(["Название Тег", "Статус удаления"])
@@ -742,7 +747,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
             # Добавляем чекбокс во вторую колонку
             item.setCheckState(1, Qt.Unchecked)  # По умолчанию не выбран
-        
+
             # Можно сохранить данные тега в item
             item.setData(0, Qt.UserRole, tag["ID_tag"])  # Сохраняем ID тега
 
@@ -811,7 +816,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def load_tags_and_genre_to_window_add_book(self):
 
         self.window_add_book_treeWidget.clear()
-        
+
         ld = GetData()
 
         # Полчуение всех тегов
@@ -838,7 +843,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             tag_in_tree.setText(0, f"{tag['Name_tag']}")
             tag_in_tree.setCheckState(1, 0)
             tag_in_tree.setData(0, Qt.UserRole, tag["ID_tag"])
-        
+
         for genre in all_genres:
             genre_in_tree = QTreeWidgetItem(root_genre_item)
             genre_in_tree.setText(0, f"{genre['Name_genre']}")
@@ -931,7 +936,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         all_genres = ld.get_info_about_genres(full=True, flag=False)
         # print(all_genres)
 
-        
+
         self.main_window_tags.clear()
 
         self.main_window_tags.setHeaderLabels(["Категории", "Книги"])
@@ -956,7 +961,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
             standart_category.setIcon(0, QIcon("icon_folder.png"))
 
             if el == "Жанры":
-                all_genres = ld.get_info_about_genres(full=True, flag=False)
                 for genre in all_genres:
                     genre_category = QTreeWidgetItem(standart_category)
                     genre_category.setText(0, genre["Name_genre"])
@@ -968,7 +972,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         # print(f"formats: {formats_}")
                         for format_ in formats_:
                             book_genre = QTreeWidgetItem(genre_category)
-                            book_genre.setText(1, f"{book_with_genre[1]} {format_}") 
+                            book_genre.setText(1, f"{book_with_genre[1]} {format_}")
                             book_genre.setData(1, Qt.UserRole, book_with_genre[0])
                             book_genre.setData(1, Qt.UserRole + 1, book_with_genre[1])
                             book_genre.setData(1, Qt.UserRole + 2, book_with_genre[2])
@@ -976,9 +980,8 @@ class MyApp(QMainWindow, Ui_MainWindow):
                             book_genre.setData(1, Qt.UserRole + 4, format_)
                             book_genre.setIcon(1, QIcon("icon_book.png"))
 
-            elif el == "Года":            
+            elif el == "Года":
 
-                ld = GetData()
 
                 unique_years = ld.get_unique_years()
                 # Добавляем все года
@@ -994,7 +997,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         # print(f"formats: {formats_}")
                         for format_ in formats_:
                             book_year = QTreeWidgetItem(year_category)
-                            book_year.setText(1, f"{book_with_year[1]} {format_}") 
+                            book_year.setText(1, f"{book_with_year[1]} {format_}")
                             book_year.setData(1, Qt.UserRole, book_with_year[0])
                             book_year.setData(1, Qt.UserRole + 1, book_with_year[1])
                             book_year.setData(1, Qt.UserRole + 2, book_with_year[2])
@@ -1012,26 +1015,26 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         if index == 1 or index == 2 or index == 3:
                             if partname != None:
                                 name += partname + " "
-                        index += 1    
+                        index += 1
                         author_category.setText(0, f"{name}")
                         author_category.setIcon(0, QIcon("icon_folder.png"))
-                    
+
                     author_filt = []
                     if author[1] != None:
                         author_filt.append(author[1])
                     else:
                         author_filt.append("")
-                    
+
                     if author[2] != None:
                         author_filt.append(author[2])
                     else:
                         author_filt.append("")
-                    
+
                     if author[3] != None:
                         author_filt.append(author[3])
                     else:
                         author_filt.append("")
-                    
+
                     if author[4] != None:
                         author_filt.append(author[4])
                     else:
@@ -1046,9 +1049,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
                             name_book_ = book_author_["name"]
                             formats_ = formats
                             id_book_ = ld.get_id_book(book_author_["name"])[0][0]
-                            
+
                             book_author = QTreeWidgetItem(author_category)
-                            book_author.setText(1, f"{name_book_} {formats_}") 
+                            book_author.setText(1, f"{name_book_} {formats_}")
                             book_author.setData(1, Qt.UserRole, id_book_)
                             book_author.setData(1, Qt.UserRole + 1, name_book_)
 
@@ -1078,7 +1081,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     book_with_tag.setData(1, Qt.UserRole + 3, book[3])
                     book_with_tag.setData(1, Qt.UserRole + 4, format_)
                     book_with_tag.setIcon(1, QIcon("icon_book.png"))
-        
+
 
         # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
 
@@ -1095,7 +1098,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             self.listWidget.clear()
 
             self.load_books_to_list_widgets(book)
-            
+
             # Получать значение по книге название и форматы и вызвать функцию для загрузки книги в основное поле для книг
             print(f"ID: {book_id}")
             print(f"Название: {book_name}")
@@ -1125,9 +1128,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
         }
 
         KEY_MAP = {
-            "rus": {"н": "t", "и": "fn", "ф": "ln", "от": "mn", "нн": "nn", "г": "y", "п": "p",
+            "rus": {"н": "t", "новн": "newt", "и": "fn", "ф": "ln", "от": "mn", "нн": "nn", "г": "y", "п": "p",
                     "жанры": "genres", "теги": "tags"},
-            "eng": {"t": "t", "fn": "fn", "ln": "ln", "mn": "mn", "nn": "nn", "y": "y", "p": "p",
+            "eng": {"t": "t","newt": "newt", "fn": "fn", "ln": "ln", "mn": "mn", "nn": "nn", "y": "y", "p": "p",
                     "genres": "genres", "tags": "tags"}
         }
 
@@ -1226,13 +1229,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
             self.clicked_delete(script=True, data=result)
         elif (command_types[lang].get(command_type) == "edit"
               and command_types[lang].get(command_obj) == "book"):
-            pass
+            self.edit_book(script=True, data=result)
         else:
             QMessageBox.warning(self, 'Ошибка', 'Неизвестная команда')
-            return    
+            return
 
     def open_edit_window(self, book_name):
-
         self.load_tags_and_genre_to_window_edit_book()
 
         self.current_edit_book_name = book_name
@@ -1248,68 +1250,143 @@ class MyApp(QMainWindow, Ui_MainWindow):
             self.window_edit_book_middlename.setText(info['middlename'] if info['middlename'] else "")
             self.window_edit_book_nickname.setText(info['nickname'] if info['nickname'] else "")
 
-            # РЎРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РёР№ ID РєРЅРёРіРё РґР»СЏ РїРѕСЃР»РµРґСѓСЋС‰РµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ
+            if info['genres']:
+                self.set_selected_items_in_tree(self.window_edit_book_treeWidget, info['genres'], parent_name="Жанры‹")
+            if info['tags']:
+                self.set_selected_items_in_tree(self.window_edit_book_treeWidget, info['tags'],
+                                                parent_name="Пользовательские теги")
+
             self.current_edit_book_id = info['id_book']
             self.current_edit_author_id = info['id_author']
-
-            self.stackedWidget.setCurrentIndex(2)  # РџРµСЂРµРєР»СЋС‡Р°РµРјСЃСЏ РЅР° РѕРєРЅРѕ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+            self.stackedWidget.setCurrentIndex(2)
         else:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ')
+            QMessageBox.warning(self, 'Ошибка', 'Не удалось загрузить информацию о книге')
 
+    def set_selected_items_in_tree(self, tree_widget, selected_items, parent_name):
+        root = tree_widget.invisibleRootItem()
+        for i in range(root.childCount()):
+            parent = root.child(i)
+            if parent.text(0) == parent_name:
+                for j in range(parent.childCount()):
+                    child = parent.child(j)
+                    item_name = child.text(0)
+                    if item_name in selected_items:
+                        child.setCheckState(1, Qt.Checked)
+                    else:
+                        child.setCheckState(1, Qt.Unchecked)
+                break
 
-    def edit_book(self):
-        # РџРѕР»СѓС‡Р°РµРј РґР°РЅРЅС‹Рµ РёР· РїРѕР»РµР№ РІРІРѕРґР°
-        new_book_name = self.window_edit_book_name_book.text().strip()
-        year = self.window_edit_book_year.text().strip()
-        author_firstname = self.window_edit_book_firstname.text().strip()
-        author_lastname = self.window_edit_book_lastname.text().strip()
-        author_middlename = self.window_edit_book_middlename.text().strip()
-        author_nickname = self.window_edit_book_nickname.text().strip()
+    def edit_book(self, script=True, data=None):
 
-        # Р’Р°Р»РёРґР°С†РёСЏ РґР°РЅРЅС‹С…
+        loaddata = GetData()
+        selected_tag_ids = []
+        selected_genre_ids = []
+        if script:
+            self.current_edit_book_name = data.get('t')
+            if not self.current_edit_book_name:
+                QMessageBox.warning(self, 'Ошибка', 'Введите название книги')
+                return
+            loaddata.get_connection()
+            if not loaddata.get_id_book(self.current_edit_book_name.lower()):
+                QMessageBox.warning(self, 'Ошибка', 'Книга не найдена')
+                loaddata.close_connection()
+                return
+            loaddata.close_connection()
+            book_info = loaddata.get_info_about_books(flag=True, book_name=self.current_edit_book_name.lower())[0]
+            self.current_edit_book_id = book_info['id_book']
+            self.current_edit_author_id = book_info['id_author']
+            if data.get('newt'):
+                new_book_name = data.get('newt').lower()
+            else:
+                new_book_name = book_info['name_book']
+            if data.get('y'):
+                year = data.get('y')
+            else:
+                year = book_info['year']
+            if data.get('fn'):
+                author_firstname = data.get('fn')
+            else:
+                author_firstname = book_info['firstname']
+            if data.get('ln'):
+                author_lastname = data.get('ln')
+            else:
+                author_lastname = book_info['lastname']
+            if data.get('mn'):
+                author_middlename = data.get('mn')
+            else:
+                author_middlename = book_info['middlename']
+            if data.get('nn'):
+                author_nickname = data.get('nn')
+            else:
+                author_nickname = book_info['nickname']
+            if data.get('tags'):
+                selected_tags = data.get('tags', [])
+            else:
+                selected_tags = book_info.get('tags', [])
+            if data.get('genres'):
+                selected_genres = data.get('genres', [])
+            else:
+                selected_genres = book_info.get('genres', [])
+            loaddata.get_connection()
+            if selected_genres is None:
+                selected_genres = []
+            if selected_tags is None:
+                selected_tags = []
+            for tag in selected_tags:
+                id_tag = loaddata.get_id_tag(tag)
+                if not id_tag:
+                    QMessageBox.warning(self, 'Ошибка', f'Тег "{tag}" не найден')
+                    loaddata.get_connection()
+                    return
+                selected_tag_ids.append(id_tag[0][0])
+            for genre in selected_genres:
+                id_genre = loaddata.get_id_genre(genre)
+                if not id_genre:
+                    QMessageBox.warning(self, 'Ошибка', f'Жанр "{genre}" не найден')
+                    loaddata.get_connection()
+                    return
+                selected_genre_ids.append(id_genre[0][0])
+            loaddata.close_connection()
+
+        else:
+            new_book_name = self.window_edit_book_name_book.text().strip()
+            year = self.window_edit_book_year.text().strip()
+            author_firstname = self.window_edit_book_firstname.text().strip()
+            author_lastname = self.window_edit_book_lastname.text().strip()
+            author_middlename = self.window_edit_book_middlename.text().strip()
+            author_nickname = self.window_edit_book_nickname.text().strip()
+            selected_tags, selected_genres = self.get_select_tag_and_genre(
+                tree_widget=self.window_edit_book_treeWidget
+            )
+            selected_genre_ids = [genre['id'] for genre in selected_genres]
+            selected_tag_ids = [tag['id'] for tag in selected_tags]
+
         if not new_book_name:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РєРЅРёРіРё')
+            QMessageBox.warning(self, 'Ошибка', 'Введите название книги')
             return
+        loaddata.get_connection()
+        if new_book_name.lower() != self.current_edit_book_name.lower():
+            if loaddata.get_id_book(new_book_name.lower()):
+                QMessageBox.warning(self, 'Ошибка', 'Книга с таким названием уже существует')
+                loaddata.close_connection()
+                return
+        loaddata.close_connection()
         try:
             year = int(year)
             if year <= 0 or year >= 3000:
                 raise ValueError
         except ValueError:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ РіРѕРґ РёР·РґР°РЅРёСЏ (РѕС‚ 1 РґРѕ 2999)')
+            QMessageBox.warning(self, 'Ошибка', 'Введите корректный год издания (от 1 до 2999)')
             return
 
         if not author_firstname or not author_lastname:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р’РІРµРґРёС‚Рµ РёРјСЏ Рё С„Р°РјРёР»РёСЋ Р°РІС‚РѕСЂР°')
+            QMessageBox.warning(self, 'Ошибка', 'Введите имя и фамилию автора')
             return
 
-        if len(author_firstname) < 2:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РРјСЏ Р°РІС‚РѕСЂР° РґРѕР»Р¶РЅРѕ СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 2 СЃРёРјРІРѕР»Р°')
-            return
-
-        if len(author_lastname) < 2:
-            QMessageBox.warning(self, 'РћС€РёР±РєР°', 'Р¤Р°РјРёР»РёСЏ Р°РІС‚РѕСЂР° РґРѕР»Р¶РЅР° СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 2 СЃРёРјРІРѕР»Р°')
-            return
-
-        # РЎРѕР·РґР°РµРј СЌРєР·РµРјРїР»СЏСЂ РјРµРЅРµРґР¶РµСЂР° Р‘Р”
         db_manager = DatabaseManager()
 
         try:
-            # РџРѕР»СѓС‡Р°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚РµРєСѓС‰РµР№ РєРЅРёРіРµ РїРµСЂРµРґ РёР·РјРµРЅРµРЅРёРµРј
-            loaddata = GetData()
-            old_book_info = loaddata.get_info_about_books(flag=True, book_name=self.current_edit_book_name)
-
-            if not old_book_info:
-                QMessageBox.warning(self, 'РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ')
-                return
-
-            old_book_info = old_book_info[0]
-            old_book_name = old_book_info['name_book']
-            old_formats = old_book_info['formats']
-
-            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ
             db_manager.update_book(self.current_edit_book_id, new_book_name, year)
-
-            # РћР±РЅРѕРІР»СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РІС‚РѕСЂРµ
             db_manager.update_author(
                 self.current_edit_author_id,
                 firstname=author_firstname,
@@ -1318,58 +1395,63 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 nickname=author_nickname if author_nickname else None
             )
 
-            # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р»С‹ РєРЅРёРіРё, РµСЃР»Рё РёР·РјРµРЅРёР»РѕСЃСЊ РЅР°Р·РІР°РЅРёРµ
-            if old_book_name.lower() != new_book_name.lower():
+            with db_manager.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM Books_Genres WHERE ID_book = ?",
+                               (self.current_edit_book_id,))
+                for genre_id in selected_genre_ids:
+                    cursor.execute(
+                        "INSERT INTO Books_Genres (ID_book, ID_genre) VALUES (?, ?)",
+                        (self.current_edit_book_id, genre_id)
+                    )
+
+                cursor.execute("DELETE FROM Books_Tags WHERE ID_book = ?",
+                               (self.current_edit_book_id,))
+                for tag_id in selected_tag_ids:
+                    cursor.execute(
+                        "INSERT INTO Books_Tags (ID_book, ID_tag) VALUES (?, ?)",
+                        (self.current_edit_book_id, tag_id)
+                    )
+
+                conn.commit()
+
+            book_info = loaddata.get_info_about_books(flag=True, book_name=new_book_name.lower())[0]
+            old_formats = book_info['formats']
+            if self.current_edit_book_name.lower() != new_book_name.lower():
                 base_dir = Path(__file__).parent.resolve()
                 books_dir = base_dir / "books"
 
                 for format_name in old_formats:
-                    # РЎС‚Р°СЂРѕРµ РёРјСЏ С„Р°Р№Р»Р°
-                    old_safe_name = old_book_name.replace(" ", "_").lower()
+
+                    old_safe_name = self.current_edit_book_name.replace(" ", "_").lower()
                     old_filename = f"{old_safe_name}_{format_name}.{format_name}"
                     old_path = books_dir / old_filename
 
-                    # РќРѕРІРѕРµ РёРјСЏ С„Р°Р№Р»Р°
                     new_safe_name = new_book_name.replace(" ", "_").lower()
                     new_filename = f"{new_safe_name}_{format_name}.{format_name}"
                     new_path = books_dir / new_filename
 
-                    # РџРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р»
                     if old_path.exists():
                         old_path.rename(new_path)
 
-            QMessageBox.information(self, 'РЈСЃРїРµС…', 'РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РєРЅРёРіРµ СѓСЃРїРµС€РЅРѕ РѕР±РЅРѕРІР»РµРЅР°')
-
-            # РћС‡РёС‰Р°РµРј РїРѕР»СЏ РІРІРѕРґР°
-            self.window_edit_book_name_book.clear()
-            self.window_edit_book_year.clear()
-            self.window_edit_book_firstname.clear()
-            self.window_edit_book_lastname.clear()
-            self.window_edit_book_middlename.clear()
-            self.window_edit_book_nickname.clear()
-
-            # РћР±РЅРѕРІР»СЏРµРј С‚РµРєСѓС‰РµРµ РёРјСЏ РєРЅРёРіРё
+            QMessageBox.information(self, 'Успех', 'Данные книги обновлены!')
             self.current_edit_book_name = new_book_name
-
-            # Р’РѕР·РІСЂР°С‰Р°РµРјСЃСЏ РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ
             self.show_main_window()
-
-            # РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє РєРЅРёРі
             self.search_books()
 
         except Exception as e:
-            QMessageBox.critical(self, 'РћС€РёР±РєР°', f'РћС€РёР±РєР°: {str(e)}')
+            QMessageBox.critical(self, 'Ошибка', f'Ошибка при обновлении: {str(e)}')
 
     def useClick(self):
-         file_path = "click_1.mp3"
-        
+        file_path = "click_1.mp3"
+
         # Создаем медиа контент из файла
-         url = QUrl.fromLocalFile(file_path)
-         content = QMediaContent(url)
-        
+        url = QUrl.fromLocalFile(file_path)
+        content = QMediaContent(url)
+
         # Устанавливаем контент и воспроизводим
-         self.player.setMedia(content)
-         self.player.play()
+        self.player.setMedia(content)
+        self.player.play()
 
     def calculating_statistics(self):
         # Общее количество книг
@@ -1410,12 +1492,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
             'weight': 'bold'        # Жирный шрифт для лучшей читаемости
         }
         wedges, texts, autotexts = ax.pie(
-            sizes, 
-            labels=labels, 
+            sizes,
+            labels=labels,
             autopct='%1.1f%%',
             startangle=90,
-            textprops=font_props,  
-            pctdistance=0.85       
+            textprops=font_props,
+            pctdistance=0.85
         )
         for autotext in autotexts:
             autotext.set_fontsize(autopct_props['fontsize'])
@@ -1446,21 +1528,21 @@ class MyApp(QMainWindow, Ui_MainWindow):
         sizes = count_book_for_use_author
         # Настройки шрифтов
         font_props = {
-            'fontsize': 6,          
-            'color': 'black',       
+            'fontsize': 6,
+            'color': 'black',
         }
         autopct_props = {
-            'fontsize': 5,          
-            'color': 'white',       
-            'weight': 'bold'        
+            'fontsize': 5,
+            'color': 'white',
+            'weight': 'bold'
         }
         wedges, texts, autotexts = ax.pie(
-            sizes, 
-            labels=labels, 
+            sizes,
+            labels=labels,
             autopct='%1.1f%%',
             startangle=90,
-            textprops=font_props,  
-            pctdistance=0.85       
+            textprops=font_props,
+            pctdistance=0.85
         )
         for autotext in autotexts:
             autotext.set_fontsize(autopct_props['fontsize'])
@@ -1477,15 +1559,15 @@ class MyApp(QMainWindow, Ui_MainWindow):
         try:
             # Получаем данные из БД
             book_stats = ld.statistic_3()  # Предполагаем, что это метод, который возвращает данные как в вашем исходном запросе
-            
+
             if not book_stats:
                 print("Нет данных для отображения")
                 return
-                
+
             # Подготовка данных для графика
             dates = [f"{row[0]}-{row[1]}" for row in book_stats]  # Год-месяц
             counts = [row[2] for row in book_stats]  # Количество книг
-            
+
             # Очищаем текущий макет (если есть)
             if self.widget.layout():
                 layout = self.widget.layout()
@@ -1495,42 +1577,42 @@ class MyApp(QMainWindow, Ui_MainWindow):
                         item.widget().deleteLater()
             else:
                 layout = QVBoxLayout(self.widget)
-                
+
             # Создаем фигуру
             fig = Figure(figsize=(5, 3), dpi=100, facecolor='none')
             ax = fig.add_subplot(111)
-            
+
             # Настройки шрифтов
             font_props = {
                 'fontsize': 8,
                 'color': 'black'
             }
-            
+
             # Строим столбчатую диаграмму
             bars = ax.bar(dates, counts, color='skyblue')
-            
+
             # Добавляем значения на столбцы
             for bar in bars:
                 height = bar.get_height()
                 ax.text(bar.get_x() + bar.get_width()/2., height,
                         f'{int(height)}',
                         ha='center', va='bottom', fontsize=6)
-            
+
             # Настройки осей
             ax.set_xticks(range(len(dates)))
             ax.set_xticklabels(dates, rotation=45, ha='right', fontsize=6)
             ax.set_ylabel('Количество книг', fontdict=font_props)
             ax.set_title("Статистика добавления книг по месяцам", fontsize=10, pad=10)
-            
+
             # Улучшаем внешний вид
             ax.grid(axis='y', linestyle='--', alpha=0.7)
             fig.tight_layout()
-            
+
             # Отображаем график
             canvas = FigureCanvas(fig)
             layout.addWidget(canvas)
             self.widget.setLayout(layout)
-            
+
         except Exception as e:
             print(f"Ошибка при построении графика: {e}")
 

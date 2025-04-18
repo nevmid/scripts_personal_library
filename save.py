@@ -9,7 +9,7 @@ class DatabaseManager:
      def __init__(self, db_name="book_db.db"):
          self.db_name = db_name
  
-     def _get_connection(self):
+     def get_connection(self):
          return sqlite3.connect(self.db_name)
  
      def add_book(self, book_name, year):
@@ -18,7 +18,7 @@ class DatabaseManager:
          book_name = book_name.lower()
          print(book_name)
          try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  cursor.execute("""
                      INSERT INTO Books (Name_book, Year_of_publication)
@@ -42,7 +42,7 @@ class DatabaseManager:
                 correct_name_book += " "
          # print("new: ", correct_name_book)
          try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  conn.execute("PRAGMA foreign_keys = ON") #//////////////////////////////////////////////////
                  cursor.execute("""
@@ -68,7 +68,7 @@ class DatabaseManager:
              if existing_authors:
                  return existing_authors[0][0]
 
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  cursor.execute("""
                              INSERT INTO Authors (Name, Surname, Patronymic, Nickname)
@@ -81,7 +81,7 @@ class DatabaseManager:
      def link_book_author(self, book_id, author_id):
          """Связывает книгу с автором"""
          try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  cursor.execute("""
                      INSERT INTO Books_Authors (ID_book, ID_author)
@@ -93,7 +93,7 @@ class DatabaseManager:
      def create_extensions(self):
          """Создает необходимые расширения файлов в БД"""
          try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  formats_to_add = ["txt", "pdf", "fb2"]
  
@@ -109,7 +109,7 @@ class DatabaseManager:
      def get_format_id(self, format_name):
          """Возвращает ID формата по его названию"""
          try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  cursor.execute("""
                      SELECT ID_format FROM Formats 
@@ -123,7 +123,7 @@ class DatabaseManager:
      def link_book_format(self, book_id, format_id):
          """Связывает книгу с форматом"""
          try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  cursor.execute("""
                      INSERT INTO Books_Formats (ID_book, ID_format)
@@ -146,7 +146,7 @@ class DatabaseManager:
      def add_tag(self, tag_name):
         """Добавление тега"""
         try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  
                  conn.execute("PRAGMA foreign_keys = ON")
@@ -162,7 +162,7 @@ class DatabaseManager:
      def delete_tags(self, list_tags):
         """Удаление тега"""
         try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  
                  conn.execute("PRAGMA foreign_keys = ON")
@@ -179,7 +179,7 @@ class DatabaseManager:
      def link_book_tags(self, id_book, id_tag):
         """Связка книги с тегом"""
         try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  
                  conn.execute("PRAGMA foreign_keys = ON")
@@ -194,7 +194,7 @@ class DatabaseManager:
      def link_book_genre(self, id_book, id_genre):
         """Связка книги с жанром"""
         try:
-             with self._get_connection() as conn:
+             with self.get_connection() as conn:
                  cursor = conn.cursor()
                  
                  conn.execute("PRAGMA foreign_keys = ON")
@@ -207,9 +207,8 @@ class DatabaseManager:
              raise Exception(f"Ошибка при связывании тега и книги: {str(e)}")
 
      def update_book(self, book_id, new_name=None, new_year=None):
-        """РћР±РЅРѕРІР»СЏРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєРЅРёРіРµ"""
         try:
-            with self._get_connection() as conn:
+            with self.get_connection() as conn:
                 cursor = conn.cursor()
                 if new_name:
                     cursor.execute("""
@@ -224,12 +223,11 @@ class DatabaseManager:
                          WHERE Id_book = ?
                      """, (new_year, book_id))
         except sqlite3.Error as e:
-            raise Exception(f"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РєРЅРёРіРё: {str(e)}")
+            raise Exception(f"Ошибка при обновлении книги: {str(e)}")
     
      def update_author(self, author_id, firstname=None, lastname=None, middlename=None, nickname=None):
-        """РћР±РЅРѕРІР»СЏРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± Р°РІС‚РѕСЂРµ"""
         try:
-            with self._get_connection() as conn:
+            with self.get_connection() as conn:
                 cursor = conn.cursor()
                 updates = []
                 params = []
@@ -252,7 +250,7 @@ class DatabaseManager:
                     params.append(author_id)
                     cursor.execute(query, params)
         except sqlite3.Error as e:
-            raise Exception(f"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё Р°РІС‚РѕСЂР°: {str(e)}")
+            raise Exception(f"Ошибка при обновлении автора: {str(e)}")
 
 
 def copy_book_file(source_path, book_name, format_name, books_dir="books"):
