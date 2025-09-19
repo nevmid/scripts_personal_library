@@ -1,8 +1,10 @@
 import sys
 import os
+import time
+
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QMimeData, QUrl, QSize
+from PyQt5.QtCore import Qt, QMimeData, QUrl, QSize, QThread, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, \
     QPushButton, QHBoxLayout, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QTextEdit
 from create_db import setup_database
@@ -27,6 +29,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.init_tree_loader()
 
         self.current_edit_book_id = None
         self.current_edit_author_id = None
@@ -928,18 +931,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
             genre_in_tree.setData(0, Qt.UserRole + 1, genre["Code"])
 
     # Главное дерево виджетов
-    def load_tree_main(self):
-
-        books_for_load = []
-
+    def on_tree_data_loaded(self, genres, tags, all_years, all_authors):
+        self.main_window_tags.setUpdatesEnabled(False)
         ld = GetData()
 
-        # Полчуение всех тегов
-        all_tags = ld.get_info_about_tags(full=True, flag=False)
+        all_tags = tags
         # print(all_tags)
 
-        # Получение всех жанров
-        all_genres = ld.get_info_about_genres(full=True, flag=False)
+        all_genres = genres
         # print(all_genres)
 
 
@@ -989,7 +988,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             elif el == "Года":
 
 
-                unique_years = ld.get_unique_years()
+                unique_years = all_years
                 # Добавляем все года
                 for year in unique_years:
                     year_category = QTreeWidgetItem(standart_category)
@@ -1012,7 +1011,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                             book_year.setIcon(1, QIcon("icon_book.png"))
 
             elif el == "Автор":
-                authors = ld.get_info_about_authors(author={},flag=False)
+                authors = all_authors
                 for author in authors:
                     author_category = QTreeWidgetItem(standart_category)
                     index = 0
@@ -1088,7 +1087,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     book_with_tag.setData(1, Qt.UserRole + 4, format_)
                     book_with_tag.setIcon(1, QIcon("icon_book.png"))
 
-
+        self.main_window_tags.setUpdatesEnabled(True)
         # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
 
     def on_item_double_clicked(self, item, column):
@@ -1769,6 +1768,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.stackedWidget_2.setCurrentIndex(1)
 
 
+    def init_tree_loader(self):
+        self.tree_loader = DataLoader()
+        self.tree_loader.data_ready.connect(self.on_tree_data_loaded)
+
+    def load_tree_main(self):
+        if not self.tree_loader.isRunning():
+            self.tree_loader.start()
 
 class HoverButton(QPushButton):
     def __init__(self, normal_icon, hover_icon, parent=None):
@@ -1785,6 +1791,17 @@ class HoverButton(QPushButton):
     def leaveEvent(self, event):
         self.setIcon(self.normal_icon)
         super().leaveEvent(event)
+
+class DataLoader(QThread):
+    data_ready = pyqtSignal(object, object, object, object)
+
+    def run(self):
+        ld = GetData()
+        genres = ld.get_info_about_genres(full=True, flag=False)
+        tags = ld.get_info_about_tags(full=True, flag=False)
+        all_years = ld.get_unique_years()
+        all_authors = ld.get_info_about_authors(author={}, flag=False)
+        self.data_ready.emit(genres, tags, all_years, all_authors)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
