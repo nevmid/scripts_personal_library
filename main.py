@@ -1091,7 +1091,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
 
     def on_item_double_clicked(self, item, column):
-        if column == 1:
+        if column == 1 and item.data(1, Qt.UserRole) is not None:
             book_id = item.data(1, Qt.UserRole)
             book_name = item.data(1, Qt.UserRole + 1)
             book_author = item.data(1, Qt.UserRole + 2)
