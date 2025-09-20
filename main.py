@@ -29,6 +29,20 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+
+
+        self.main_window_LineEdit.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.main_window_LineEdit.customContextMenuRequested.connect(self.show_context_menu)
+
+        def show_context_menu(self, pos):
+            menu = self.main_window_LineEdit.createStandardContextMenu()
+            select_file_action = menu.addAction("Вставить путь к файлу...")
+            action = menu.exec_(self.main_window_LineEdit.mapToGlobal(pos))
+            if action == select_file_action:
+                fname, _ = QFileDialog.getOpenFileName(self, "Выберите файл")
+                if fname:
+                    self.main_window_LineEdit.setText(fname)
+
         self.init_tree_loader()
 
         self.current_edit_book_id = None
@@ -121,6 +135,15 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Добавляем QTextEdit на вкладку документации
         self.tab_2_layout = QVBoxLayout(self.tab_2)  # Предполагается, что tab_2 - это ваша вкладка документации
         self.tab_2_layout.addWidget(self.documentation_text)
+
+    def show_context_menu(self, pos):
+        menu = self.main_window_LineEdit.createStandardContextMenu()
+        select_file_action = menu.addAction("Вставить путь к файлу...")
+        action = menu.exec_(self.main_window_LineEdit.mapToGlobal(pos))
+        if action == select_file_action:
+            fname, _ = QFileDialog.getOpenFileName(self, "Выберите файл")
+            if fname:
+                self.main_window_LineEdit.insert(fname)
 
     # Функции открытия окон
     def show_window_add_book(self):
