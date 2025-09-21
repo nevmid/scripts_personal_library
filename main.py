@@ -1,6 +1,5 @@
 import sys
 import os
-import time
 
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
@@ -17,7 +16,7 @@ from matplotlib.figure import Figure
 # from save_from_main import DatabaseManager, copy_book_file
 from save import DatabaseManager, copy_book_file
 
-from load_data_test import GetData
+from load_data import GetData
 
 import shutil
 from pathlib import Path  
@@ -29,20 +28,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-
-
-        self.main_window_LineEdit.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.main_window_LineEdit.customContextMenuRequested.connect(self.show_context_menu)
-
-        def show_context_menu(self, pos):
-            menu = self.main_window_LineEdit.createStandardContextMenu()
-            select_file_action = menu.addAction("Вставить путь к файлу...")
-            action = menu.exec_(self.main_window_LineEdit.mapToGlobal(pos))
-            if action == select_file_action:
-                fname, _ = QFileDialog.getOpenFileName(self, "Выберите файл")
-                if fname:
-                    self.main_window_LineEdit.setText(fname)
-
         self.init_tree_loader()
 
         self.current_edit_book_id = None
@@ -135,15 +120,6 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Добавляем QTextEdit на вкладку документации
         self.tab_2_layout = QVBoxLayout(self.tab_2)  # Предполагается, что tab_2 - это ваша вкладка документации
         self.tab_2_layout.addWidget(self.documentation_text)
-
-    def show_context_menu(self, pos):
-        menu = self.main_window_LineEdit.createStandardContextMenu()
-        select_file_action = menu.addAction("Вставить путь к файлу...")
-        action = menu.exec_(self.main_window_LineEdit.mapToGlobal(pos))
-        if action == select_file_action:
-            fname, _ = QFileDialog.getOpenFileName(self, "Выберите файл")
-            if fname:
-                self.main_window_LineEdit.insert(fname)
 
     # Функции открытия окон
     def show_window_add_book(self):
@@ -1114,7 +1090,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
 
     def on_item_double_clicked(self, item, column):
-        if column == 1 and item.data(1, Qt.UserRole) is not None:
+        if column == 1:
             book_id = item.data(1, Qt.UserRole)
             book_name = item.data(1, Qt.UserRole + 1)
             book_author = item.data(1, Qt.UserRole + 2)
@@ -1158,7 +1134,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         KEY_MAP = {
             "rus": {"н": "t", "новн": "newt", "и": "fn", "ф": "ln", "от": "mn", "нн": "nn", "г": "y", "п": "p",
                     "жанры": "genres", "теги": "tags"},
-            "eng": {"t": "t","newt": "newt", "fn": "fn", "ln": "ln", "mn": "mn", "nn": "nn", "y": "y", "p": "p",
+            "eng": {"t": "t", "newt": "newt", "fn": "fn", "ln": "ln", "mn": "mn", "nn": "nn", "y": "y", "p": "p",
                     "genres": "genres", "tags": "tags"}
         }
 
@@ -1415,13 +1391,19 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         try:
             db_manager.update_book(self.current_edit_book_id, new_book_name, year)
-            db_manager.update_author(
-                self.current_edit_author_id,
+            author_id = db_manager.add_author(
                 firstname=author_firstname,
                 lastname=author_lastname,
                 middlename=author_middlename if author_middlename else None,
                 nickname=author_nickname if author_nickname else None
             )
+
+            db_manager.link_book_author(self.current_edit_book_id, author_id)
+
+            # with db_manager.get_connection() as conn:
+            #     cursor = conn.cursor()
+            #     cursor.execute("DELETE FROM Authors WHERE Id_author = ?", (self.current_edit_author_id,))
+            #     conn.commit()
 
             with db_manager.get_connection() as conn:
                 cursor = conn.cursor()
@@ -1646,137 +1628,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
     def show_documentation(self):
         # Заполняем текст документации
-        documentation_content = r"""
-        **Инструкция по использованию приложения BookHive**
+        with open('doc.txt', 'r', encoding='utf-8') as file:
+            content = file.read()
 
-        ---
-
-        ### Введение
-
-        Приложение BookHive предназначено для управления библиотекой книг. Оно позволяет добавлять, редактировать, удалять книги и авторов, а также осуществлять поиск по различным критериям.
-
-        ---
-
-        ### Основные функции
-
-        1. **Добавление книги**
-           - Нажмите на кнопку "Добавить книгу".
-           - Заполните все необходимые поля: название книги, год издания, имя и фамилию автора, выберите файл книги.
-           - Выберите теги и жанры, если необходимо.
-           - Нажмите "Добавить", чтобы сохранить книгу в базе данных.
-
-        2. **Редактирование книги**
-           - Найдите книгу в списке и дважды щелкните по ней.
-           - Измените необходимые данные.
-           - Нажмите "Редактировать", чтобы сохранить изменения.
-
-        3. **Удаление книги**
-           - Найдите книгу в списке и нажмите кнопку "Удалить".
-           - Подтвердите удаление, если будет запрошено.
-
-        4. **Поиск книги**
-           - Перейдите на вкладку "Поиск книги".
-           - Введите критерии поиска: название, автор, год, теги и жанры.
-           - Нажмите "Поиск", чтобы отобразить результаты.
-
-        5. **Добавление тегов**
-           - Перейдите на вкладку "Добавить тег".
-           - Введите название нового тега и нажмите "Добавить".
-
-        6. **Удаление тегов**
-           - Перейдите на вкладку "Удалить тег".
-           - Выберите теги, которые хотите удалить, и нажмите "Удалить".
-
-        ---
-
-        ### Работа с интерфейсом
-
-        - **Главное окно**: отображает дерево категорий и список книг.
-        - **Стековый виджет**: позволяет переключаться между различными окнами (добавление книги, поиск, редактирование и т.д.).
-        - **Кнопки действий**: каждая книга в списке имеет кнопки для открытия, копирования, редактирования и удаления.
-
-        ---
-
-        ### Использование командной строки
-
-        Приложение BookHive также поддерживает ввод команд через текстовое поле. Это позволяет пользователям выполнять действия с помощью текстовых команд. Вот список доступных команд и их описание:
-
-        #### Команды
-
-        1. **Добавить книгу**
-           - **Команда**: `добавить книгу`
-           - **Формат ввода**: 
-             ```
-             добавить книгу "название" "автор" "год" "путь_к_файлу" жанры="жанр1, жанр2" теги="тег1, тег2"
-             ```
-           - **Пример**:
-             ```
-             добавить книгу "Война и мир" "Лев Толстой" "1869" "C:\Books\war_and_peace.pdf" жанры="роман, исторический" теги="классика, русская литература"
-             ```
-
-        2. **Удалить книгу**
-           - **Команда**: `удалить книгу`
-           - **Формат ввода**:
-             ```
-             удалить книгу "название"
-             ```
-           - **Пример**:
-             ```
-             удалить книгу "Война и мир"
-             ```
-
-        3. **Редактировать книгу**
-           - **Команда**: `редактировать книгу`
-           - **Формат ввода**:
-             ```
-             редактировать книгу "старое_название" "новое_название" "новый_автор" "новый_год" "новый_путь_к_файлу"
-             ```
-           - **Пример**:
-             ```
-             редактировать книгу "Война и мир" "Война и мир (издание 2023)" "Лев Толстой" "1869" "C:\Books\war_and_peace_2023.pdf"
-             ```
-
-        4. **Найти книгу**
-           - **Команда**: `найти книгу`
-           - **Формат ввода**:
-             ```
-             найти книгу "название" автор="имя_автора" год="год" теги="тег1, тег2" жанры="жанр1, жанр2"
-             ```
-           - **Пример**:
-             ```
-             найти книгу "Война и мир" автор="Лев Толстой" год="1869" теги="классика" жанры="роман"
-             ```
-
-        5. **Добавить тег**
-           - **Команда**: `добавить тег`
-           - **Формат ввода**:
-             ```
-             добавить тег "название_тега"
-             ```
-           - **Пример**:
-             ```
-             добавить тег "новый_тег"
-             ```
-
-        6. **Удалить тег**
-           - **Команда**: `удалить тег`
-           - **Формат ввода**:
-             ```
-             удалить тег "название_тега"
-             ```
-           - **Пример**:
-             ```
-             удалить тег "старый_тег"
-             ```
-
-        ---
-
-        ### Заключение
-
-        Приложение BookHive предоставляет удобный интерфейс для управления вашей библиотекой. Следуйте этой инструкции, чтобы максимально эффективно использовать все функции приложения.
-        """
-
-        self.documentation_text.setPlainText(documentation_content)
+        self.documentation_text.setPlainText(content)
 
     def changeTab(self, index):
         if index == 1:

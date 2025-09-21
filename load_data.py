@@ -97,6 +97,7 @@ class GetData:
 
     def get_id_book(self, book_name):
         try:
+            self.get_connection()
             cursor = self.conn.cursor()
             cursor.execute("SELECT Id_book FROM Books WHERE Name_book = ?", (book_name, ))
             result = cursor.fetchall()
@@ -282,8 +283,6 @@ class GetData:
                 cursor.execute(query, tag_name)
                 result = cursor.fetchall()
 
-
-
             return result
 
         except Exception as e:
@@ -303,6 +302,9 @@ class GetData:
 
                 cursor.execute("SELECT ID FROM Books_Genres WHERE ID_book = ? AND ID_genre = ?",
                                [id_book, id_genre])
+
+                result = cursor.fetchall()
+
             elif full:
                 query = "SELECT * FROM Genres"
                 cursor.execute(query)
@@ -312,7 +314,6 @@ class GetData:
                 genres = cursor.fetchall()
 
                 result = [dict(zip(columns, row)) for row in genres]
-
 
             else:
                 query = "SELECT * FROM Genres WHERE Name_genre = ?"
@@ -353,4 +354,195 @@ class GetData:
         finally:
             if self.conn:
                 self.close_connection()
+
+    def get_books_by_name_tag(self, name_tag):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            # SQL-запрос для получения книг по name_tag
+            cursor.execute('''
+                SELECT b.*
+                FROM Books b
+                JOIN Books_Tags bt ON b.id_book = bt.ID_book
+                JOIN Tags t ON bt.ID_tag = t.id_tag
+                WHERE t.Name_tag = ?
+            ''', (name_tag,))
+            
+            result = cursor.fetchall()  # Получаем все найденные записи
+            return result  # Возвращаем результат
+        except Exception as e:
+            print(e)  # Выводим ошибку, если она возникла
+        finally:
+            if self.conn:
+                self.close_connection()
+    
+    def get_unique_years(self):
+        try:
+
+            self.get_connection()
+            cursor = self.conn.cursor()
+
+            cursor.execute('''
+                SELECT DISTINCT Year_of_publication
+                FROM Books
+            ''')
+
+            result = cursor.fetchall()
+
+            unique_years = [row[0] for row in result]
+            return unique_years
+
+        except Exception as e:
+            print(f"Ошибка при получении уникальных годов: {e}")
+            return None
+
+        finally:
+
+            if self.conn:
+                self.close_connection()
+
+    def get_books_by_name_genre(self, name_genre):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT b.*
+                FROM Books b
+                JOIN Books_Genres bg ON b.id_book = bg.ID_book
+                JOIN Genres g ON bg.ID_genre = g.ID_genre
+                WHERE g.Name_genre = ?
+            ''', (name_genre,))
+            
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()
+                
+    def get_books_by_year(self, year):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT b.*
+                FROM Books b
+                WHERE b.Year_of_publication = ?
+            ''', (year,))
+            
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()
+
+    def statistic_1(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    g.ID_genre,
+                    g.Name_genre,
+                    COUNT(bg.ID_book) AS Book_Count
+                FROM 
+                    Genres g
+                INNER JOIN 
+                    Books_Genres bg ON g.ID_genre = bg.ID_genre
+                GROUP BY 
+                    g.ID_genre, g.Name_genre
+                ORDER BY 
+                    Book_Count DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()                       
+
+    def statistic_1_2(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    t.ID_tag,
+                    t.Name_tag,
+                    COUNT(bt.ID_book) AS Book_Count
+                FROM 
+                    Tags t
+                INNER JOIN 
+                    Books_Tags bt ON t.ID_tag = bt.ID_tag
+                GROUP BY 
+                    t.ID_tag, t.Name_tag
+                ORDER BY 
+                    Book_Count DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()                       
+
+    def statistic_2(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    a.ID_author,
+                    a.Name,
+                    a.Surname,
+                    a.Patronymic,
+                    a.Nickname,
+                    COUNT(ba.ID_book) AS Book_Count
+                FROM 
+                    Authors a
+                INNER JOIN 
+                    Books_Authors ba ON a.ID_author = ba.ID_author
+                GROUP BY 
+                    a.ID_author, a.Name, a.Surname, a.Patronymic, a.Nickname 
+                ORDER BY 
+                    Book_Count DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()   
+
+    def statistic_3(self):
+        try:
+            self.get_connection()
+            cursor = self.conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    strftime('%Y', Date_add) AS year,
+                    strftime('%m', Date_add) AS month,
+                    COUNT(*) AS book_count
+                FROM 
+                    Books
+                GROUP BY 
+                    strftime('%Y', Date_add),
+                    strftime('%m', Date_add)
+                ORDER BY 
+                    year DESC,
+                    month DESC;
+            ''')
+            result = cursor.fetchall()  
+            return result  
+        except Exception as e:
+            print(e)  
+        finally:
+            if self.conn:
+                self.close_connection()   
 
