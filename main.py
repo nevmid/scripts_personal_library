@@ -979,12 +979,12 @@ class MyApp(QMainWindow, Ui_MainWindow):
         root_standart_category = QTreeWidgetItem(self.main_window_tags)
         root_standart_category.setText(0, "Стандартные")
 
-        root_standart_category.setIcon(0, QIcon("icon_folder.png"))
+        root_standart_category.setIcon(0, QIcon("images/icon_folder.png"))
 
         root_user_category = QTreeWidgetItem(self.main_window_tags)
         root_user_category.setText(0,"Пользовательские")
 
-        root_user_category.setIcon(0, QIcon("icon_folder.png"))
+        root_user_category.setIcon(0, QIcon("images/icon_folder.png"))
 
         # Обработка для стандартных категорий
         list_standart_category = ["Жанры", "Года", "Автор"]
@@ -992,13 +992,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
         for el in list_standart_category:
             standart_category = QTreeWidgetItem(root_standart_category)
             standart_category.setText(0, f"{el}")
-            standart_category.setIcon(0, QIcon("icon_folder.png"))
+            standart_category.setIcon(0, QIcon("images/icon_folder.png"))
 
             if el == "Жанры":
                 for genre in all_genres:
                     genre_category = QTreeWidgetItem(standart_category)
                     genre_category.setText(0, genre["Name_genre"])
-                    genre_category.setIcon(0, QIcon("icon_folder.png"))
+                    genre_category.setIcon(0, QIcon("images/icon_folder.png"))
                     books_with_this_genre = ld.get_books_by_name_genre(genre["Name_genre"])
                     for book_with_genre in books_with_this_genre:
                         # Получение форматов книги
@@ -1012,7 +1012,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                             book_genre.setData(1, Qt.UserRole + 2, book_with_genre[2])
                             book_genre.setData(1, Qt.UserRole + 3, book_with_genre[3])
                             book_genre.setData(1, Qt.UserRole + 4, format_)
-                            book_genre.setIcon(1, QIcon("icon_book.png"))
+                            book_genre.setIcon(1, QIcon("images/icon_book.png"))
 
             elif el == "Года":
 
@@ -1022,7 +1022,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 for year in unique_years:
                     year_category = QTreeWidgetItem(standart_category)
                     year_category.setText(0, f"{year}")
-                    year_category.setIcon(0, QIcon("icon_folder.png"))
+                    year_category.setIcon(0, QIcon("images/icon_folder.png"))
                     # Добавляем для текущего года книги
                     books_with_year = ld.get_books_by_year(year)
                     for book_with_year in books_with_year:
@@ -1037,7 +1037,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                             book_year.setData(1, Qt.UserRole + 2, book_with_year[2])
                             book_year.setData(1, Qt.UserRole + 3, book_with_year[3])
                             book_year.setData(1, Qt.UserRole + 4, format_)
-                            book_year.setIcon(1, QIcon("icon_book.png"))
+                            book_year.setIcon(1, QIcon("images/icon_book.png"))
 
             elif el == "Автор":
                 authors = all_authors
@@ -1051,7 +1051,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                                 name += partname + " "
                         index += 1
                         author_category.setText(0, f"{name}")
-                        author_category.setIcon(0, QIcon("icon_folder.png"))
+                        author_category.setIcon(0, QIcon("images/icon_folder.png"))
 
                     author_filt = []
                     if author[1] != None:
@@ -1093,13 +1093,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
                             # book_author.setData(1, Qt.UserRole + 2, formats_)
                             # book_author.setData(1, Qt.UserRole + 3, book_with_year[3])
                             book_author.setData(1, Qt.UserRole + 4, formats_)
-                            book_author.setIcon(1, QIcon("icon_book.png"))
+                            book_author.setIcon(1, QIcon("images/icon_book.png"))
 
         # Обработка для тегов
         for tag in all_tags:
             user_category = QTreeWidgetItem(root_user_category)
             user_category.setText(0, f"{tag['Name_tag'].capitalize()}")
-            user_category.setIcon(0, QIcon("icon_folder.png"))
+            user_category.setIcon(0, QIcon("images/icon_folder.png"))
             search_tag = tag['Name_tag']
             books = ld.get_books_by_name_tag(search_tag)
             for book in books:
@@ -1114,7 +1114,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     book_with_tag.setData(1, Qt.UserRole + 2, book[2])
                     book_with_tag.setData(1, Qt.UserRole + 3, book[3])
                     book_with_tag.setData(1, Qt.UserRole + 4, format_)
-                    book_with_tag.setIcon(1, QIcon("icon_book.png"))
+                    book_with_tag.setIcon(1, QIcon("images/icon_book.png"))
 
         self.main_window_tags.setUpdatesEnabled(True)
         # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
