@@ -53,30 +53,30 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Создаем медиаплеер
         self.player = QMediaPlayer()
 
-        self.setWindowIcon(QIcon("app_icon.ico"))  # или .png
+        self.setWindowIcon(QIcon("images/app_icon.ico"))  # или .png
 
         # Устанавливаем имя программы      
         self.setWindowTitle("BookHive")
 
         # Устанавливаем икноку для программы
-        self.setWindowIcon(QIcon("logo.png"))
+        self.setWindowIcon(QIcon("images/logo.png"))
 
         # Проверка существования БД
         self.create_db()
 
         # Иконки
-        self.open_eye_icon = QIcon("eye.png")
-        self.close_eye_icon = QIcon("close_eye.png")
+        self.open_eye_icon = QIcon("images/eye.png")
+        self.close_eye_icon = QIcon("images/close_eye.png")
 
-        self.select_copy = QIcon("select_copy.png")
-        self.not_select_copy = QIcon("not_select_copy.png")
+        self.select_copy = QIcon("images/select_copy.png")
+        self.not_select_copy = QIcon("images/not_select_copy.png")
 
-        self.select_delete = QIcon("select_delete.png")
-        self.not_select_delete = QIcon("not_select_delete.png")
+        self.select_delete = QIcon("images/select_delete.png")
+        self.not_select_delete = QIcon("images/not_select_delete.png")
 
 
-        self.select_edit = QIcon("select_edit.png")
-        self.not_select_edit = QIcon("not_select_edit.png")
+        self.select_edit = QIcon("images/select_edit.png")
+        self.not_select_edit = QIcon("images/not_select_edit.png")
 
         # Создание папки для книг
         if not os.path.isdir("books"):
