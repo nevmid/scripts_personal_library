@@ -535,9 +535,17 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Получаем путь до текущей директории
         base_dir = Path(__file__).parent.resolve()
         books_dir = base_dir / "books"
+        file_path = books_dir / f"{push_button.objectName()}"
 
-        # Запускаем файл
-        os.startfile(books_dir / f"{push_button.objectName()}" )
+        if file_path.exists():
+            os.startfile(file_path)
+        else:
+            QMessageBox.warning(
+                self,
+                "Файл не найден",
+                f"Файл '{push_button.objectName()}' не найден в папке books.\n"
+                "Возможно, он был удален или перемещен."
+            )
 
     def clicked_delete(self, script=False, data=None):
 
@@ -572,7 +580,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 QMessageBox.warning(self, 'Ошибка', 'Книга с данный форматом не найдена')
                 return
             db_manager.delete_book(book_name_in_db)
-            os.remove(books_dir / f"{name}_{f}.{f}")
+            file_path = books_dir / f"{name}_{f}.{f}"
+            if file_path.exists():
+                os.remove(file_path)
 
             QMessageBox.information(self, 'Удаление', 'Книга удалена')
         else:
@@ -583,7 +593,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             base_dir = Path(__file__).parent.resolve()
             books_dir = base_dir / "books"
 
-            full_dir = books_dir / f"{push_button.objectName()}"
+            file_path = books_dir / f"{push_button.objectName()}"
 
             book_name_in_db = push_button.objectName()
 
@@ -591,12 +601,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
             book_name_in_db = book_name_in_db[:-8]
 
-            print(book_name_in_db)
-            print(full_dir)
-
             db_manager.delete_book(book_name_in_db)
-
-            os.remove(books_dir / f"{push_button.objectName()}")
+            if file_path.exists():
+                os.remove(file_path)
 
             QMessageBox.information(self, 'Удаление', 'Книга удалена')
 
