@@ -28,6 +28,20 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+
+
+        self.main_window_LineEdit.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.main_window_LineEdit.customContextMenuRequested.connect(self.show_context_menu)
+
+        def show_context_menu(self, pos):
+            menu = self.main_window_LineEdit.createStandardContextMenu()
+            select_file_action = menu.addAction("Вставить путь к файлу...")
+            action = menu.exec_(self.main_window_LineEdit.mapToGlobal(pos))
+            if action == select_file_action:
+                fname, _ = QFileDialog.getOpenFileName(self, "Выберите файл")
+                if fname:
+                    self.main_window_LineEdit.setText(fname)
+
         self.init_tree_loader()
 
         self.current_edit_book_id = None
@@ -157,6 +171,15 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.load_tree_main()
 
         self.stackedWidget.setCurrentIndex(0)
+
+    def show_context_menu(self, pos):
+        menu = self.main_window_LineEdit.createStandardContextMenu()
+        select_file_action = menu.addAction("Вставить путь к файлу...")
+        action = menu.exec_(self.main_window_LineEdit.mapToGlobal(pos))
+        if action == select_file_action:
+            fname, _ = QFileDialog.getOpenFileName(self, "Выберите файл")
+            if fname:
+                self.main_window_LineEdit.insert(fname)
 
     # Функция добавления книги
     def add_book(self, script=False, data=None):
@@ -1097,7 +1120,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
 
     def on_item_double_clicked(self, item, column):
-        if column == 1:
+        if column == 1 and item.data(1, Qt.UserRole) is not None:
             book_id = item.data(1, Qt.UserRole)
             book_name = item.data(1, Qt.UserRole + 1)
             book_author = item.data(1, Qt.UserRole + 2)
