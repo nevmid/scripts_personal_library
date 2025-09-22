@@ -1407,10 +1407,11 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
             db_manager.link_book_author(self.current_edit_book_id, author_id)
 
-            # with db_manager.get_connection() as conn:
-            #     cursor = conn.cursor()
-            #     cursor.execute("DELETE FROM Authors WHERE Id_author = ?", (self.current_edit_author_id,))
-            #     conn.commit()
+            with db_manager.get_connection() as conn:
+                 cursor = conn.cursor()
+                 cursor.execute("DELETE FROM Books_Authors WHERE ID_author = ? AND ID_book = ?",
+                                (self.current_edit_author_id, self.current_edit_book_id))
+                 conn.commit()
 
             with db_manager.get_connection() as conn:
                 cursor = conn.cursor()
