@@ -74,16 +74,16 @@
            - **Команда**: `редактировать книгу`
            - **Формат ввода**:
              ```
-             редактировать книгу н="старое_название" новн="новое_название" ф="фамилия" и="имя" от="отчество" нн="никнейм" г="год" п="путь_к_файлу" жанры="жанр1, жанр2" теги="тег1, тег2"
-             edit book t="old_title" newt="new_title" ln="lastname" fn="firstname" mn="middlename" nn="nickname" y="year" p="path_to_file" genres="genre1, genre2" tags="tag1, tag2"
+             редактировать книгу н="старое_название" новн="новое_название" ф="фамилия" и="имя" от="отчество" нн="никнейм" г="год" жанры="жанр1, жанр2" теги="тег1, тег2"
+             edit book t="old_title" newt="new_title" ln="lastname" fn="firstname" mn="middlename" nn="nickname" y="year" genres="genre1, genre2" tags="tag1, tag2"
              ```
 
         4. **Найти книгу**
            - **Команда**: `найти книгу`
            - **Формат ввода**:
              ```
-             найти книгу н="название' ф="фамилия" и="имя" от="отчество" нн="никнейм" г="год" п="путь_к_файлу" жанры="жанр1, жанр2" теги="тег1, тег2"
-             search book add book t="title" ln="lastname" fn="firstname" mn="middlename" nn="nickname" y="year" p="path_to_file" genres="genre1, genre2" tags="tag1, tag2"
+             найти книгу н="название' ф="фамилия" и="имя" от="отчество" нн="никнейм" г="год" жанры="жанр1, жанр2" теги="тег1, тег2"
+             search book add book t="title" ln="lastname" fn="firstname" mn="middlename" nn="nickname" y="year" genres="genre1, genre2" tags="tag1, tag2"
              ```
            - **Пример**:
              ```
