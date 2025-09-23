@@ -1,8 +1,9 @@
 import sys
 import os
+
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt, QMimeData, QUrl, QSize
+from PyQt5.QtCore import Qt, QMimeData, QUrl, QSize, QThread, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QListWidgetItem, QWidget, QLabel, \
     QPushButton, QHBoxLayout, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QTextEdit
 from create_db import setup_database
@@ -15,7 +16,7 @@ from matplotlib.figure import Figure
 # from save_from_main import DatabaseManager, copy_book_file
 from save import DatabaseManager, copy_book_file
 
-from load_data_test import GetData
+from load_data import GetData
 
 import shutil
 from pathlib import Path  
@@ -27,6 +28,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.init_tree_loader()
 
         self.current_edit_book_id = None
         self.current_edit_author_id = None
@@ -533,9 +535,17 @@ class MyApp(QMainWindow, Ui_MainWindow):
         # Получаем путь до текущей директории
         base_dir = Path(__file__).parent.resolve()
         books_dir = base_dir / "books"
+        file_path = books_dir / f"{push_button.objectName()}"
 
-        # Запускаем файл
-        os.startfile(books_dir / f"{push_button.objectName()}" )
+        if file_path.exists():
+            os.startfile(file_path)
+        else:
+            QMessageBox.warning(
+                self,
+                "Файл не найден",
+                f"Файл '{push_button.objectName()}' не найден в папке books.\n"
+                "Возможно, он был удален или перемещен."
+            )
 
     def clicked_delete(self, script=False, data=None):
 
@@ -570,7 +580,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
                 QMessageBox.warning(self, 'Ошибка', 'Книга с данный форматом не найдена')
                 return
             db_manager.delete_book(book_name_in_db)
-            os.remove(books_dir / f"{name}_{f}.{f}")
+            file_path = books_dir / f"{name}_{f}.{f}"
+            if file_path.exists():
+                os.remove(file_path)
 
             QMessageBox.information(self, 'Удаление', 'Книга удалена')
         else:
@@ -581,7 +593,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             base_dir = Path(__file__).parent.resolve()
             books_dir = base_dir / "books"
 
-            full_dir = books_dir / f"{push_button.objectName()}"
+            file_path = books_dir / f"{push_button.objectName()}"
 
             book_name_in_db = push_button.objectName()
 
@@ -589,12 +601,9 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
             book_name_in_db = book_name_in_db[:-8]
 
-            print(book_name_in_db)
-            print(full_dir)
-
             db_manager.delete_book(book_name_in_db)
-
-            os.remove(books_dir / f"{push_button.objectName()}")
+            if file_path.exists():
+                os.remove(file_path)
 
             QMessageBox.information(self, 'Удаление', 'Книга удалена')
 
@@ -928,18 +937,14 @@ class MyApp(QMainWindow, Ui_MainWindow):
             genre_in_tree.setData(0, Qt.UserRole + 1, genre["Code"])
 
     # Главное дерево виджетов
-    def load_tree_main(self):
-
-        books_for_load = []
-
+    def on_tree_data_loaded(self, genres, tags, all_years, all_authors):
+        self.main_window_tags.setUpdatesEnabled(False)
         ld = GetData()
 
-        # Полчуение всех тегов
-        all_tags = ld.get_info_about_tags(full=True, flag=False)
+        all_tags = tags
         # print(all_tags)
 
-        # Получение всех жанров
-        all_genres = ld.get_info_about_genres(full=True, flag=False)
+        all_genres = genres
         # print(all_genres)
 
 
@@ -989,7 +994,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
             elif el == "Года":
 
 
-                unique_years = ld.get_unique_years()
+                unique_years = all_years
                 # Добавляем все года
                 for year in unique_years:
                     year_category = QTreeWidgetItem(standart_category)
@@ -1012,7 +1017,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                             book_year.setIcon(1, QIcon("icon_book.png"))
 
             elif el == "Автор":
-                authors = ld.get_info_about_authors(author={},flag=False)
+                authors = all_authors
                 for author in authors:
                     author_category = QTreeWidgetItem(standart_category)
                     index = 0
@@ -1088,7 +1093,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
                     book_with_tag.setData(1, Qt.UserRole + 4, format_)
                     book_with_tag.setIcon(1, QIcon("icon_book.png"))
 
-
+        self.main_window_tags.setUpdatesEnabled(True)
         # self.load_books_to_list_widgets() # нужно название книги и id - {'name': 'затерянный мир (сборник)', 'formats': ['fb2']}
 
     def on_item_double_clicked(self, item, column):
@@ -1136,7 +1141,7 @@ class MyApp(QMainWindow, Ui_MainWindow):
         KEY_MAP = {
             "rus": {"н": "t", "новн": "newt", "и": "fn", "ф": "ln", "от": "mn", "нн": "nn", "г": "y", "п": "p",
                     "жанры": "genres", "теги": "tags"},
-            "eng": {"t": "t","newt": "newt", "fn": "fn", "ln": "ln", "mn": "mn", "nn": "nn", "y": "y", "p": "p",
+            "eng": {"t": "t", "newt": "newt", "fn": "fn", "ln": "ln", "mn": "mn", "nn": "nn", "y": "y", "p": "p",
                     "genres": "genres", "tags": "tags"}
         }
 
@@ -1393,13 +1398,20 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
         try:
             db_manager.update_book(self.current_edit_book_id, new_book_name, year)
-            db_manager.update_author(
-                self.current_edit_author_id,
+            author_id = db_manager.add_author(
                 firstname=author_firstname,
                 lastname=author_lastname,
                 middlename=author_middlename if author_middlename else None,
                 nickname=author_nickname if author_nickname else None
             )
+
+            db_manager.link_book_author(self.current_edit_book_id, author_id)
+
+            with db_manager.get_connection() as conn:
+                 cursor = conn.cursor()
+                 cursor.execute("DELETE FROM Books_Authors WHERE ID_author = ? AND ID_book = ?",
+                                (self.current_edit_author_id, self.current_edit_book_id))
+                 conn.commit()
 
             with db_manager.get_connection() as conn:
                 cursor = conn.cursor()
@@ -1624,137 +1636,10 @@ class MyApp(QMainWindow, Ui_MainWindow):
 
     def show_documentation(self):
         # Заполняем текст документации
-        documentation_content = r"""
-        **Инструкция по использованию приложения BookHive**
+        with open('doc.txt', 'r', encoding='utf-8') as file:
+            content = file.read()
 
-        ---
-
-        ### Введение
-
-        Приложение BookHive предназначено для управления библиотекой книг. Оно позволяет добавлять, редактировать, удалять книги и авторов, а также осуществлять поиск по различным критериям.
-
-        ---
-
-        ### Основные функции
-
-        1. **Добавление книги**
-           - Нажмите на кнопку "Добавить книгу".
-           - Заполните все необходимые поля: название книги, год издания, имя и фамилию автора, выберите файл книги.
-           - Выберите теги и жанры, если необходимо.
-           - Нажмите "Добавить", чтобы сохранить книгу в базе данных.
-
-        2. **Редактирование книги**
-           - Найдите книгу в списке и дважды щелкните по ней.
-           - Измените необходимые данные.
-           - Нажмите "Редактировать", чтобы сохранить изменения.
-
-        3. **Удаление книги**
-           - Найдите книгу в списке и нажмите кнопку "Удалить".
-           - Подтвердите удаление, если будет запрошено.
-
-        4. **Поиск книги**
-           - Перейдите на вкладку "Поиск книги".
-           - Введите критерии поиска: название, автор, год, теги и жанры.
-           - Нажмите "Поиск", чтобы отобразить результаты.
-
-        5. **Добавление тегов**
-           - Перейдите на вкладку "Добавить тег".
-           - Введите название нового тега и нажмите "Добавить".
-
-        6. **Удаление тегов**
-           - Перейдите на вкладку "Удалить тег".
-           - Выберите теги, которые хотите удалить, и нажмите "Удалить".
-
-        ---
-
-        ### Работа с интерфейсом
-
-        - **Главное окно**: отображает дерево категорий и список книг.
-        - **Стековый виджет**: позволяет переключаться между различными окнами (добавление книги, поиск, редактирование и т.д.).
-        - **Кнопки действий**: каждая книга в списке имеет кнопки для открытия, копирования, редактирования и удаления.
-
-        ---
-
-        ### Использование командной строки
-
-        Приложение BookHive также поддерживает ввод команд через текстовое поле. Это позволяет пользователям выполнять действия с помощью текстовых команд. Вот список доступных команд и их описание:
-
-        #### Команды
-
-        1. **Добавить книгу**
-           - **Команда**: `добавить книгу`
-           - **Формат ввода**: 
-             ```
-             добавить книгу "название" "автор" "год" "путь_к_файлу" жанры="жанр1, жанр2" теги="тег1, тег2"
-             ```
-           - **Пример**:
-             ```
-             добавить книгу "Война и мир" "Лев Толстой" "1869" "C:\Books\war_and_peace.pdf" жанры="роман, исторический" теги="классика, русская литература"
-             ```
-
-        2. **Удалить книгу**
-           - **Команда**: `удалить книгу`
-           - **Формат ввода**:
-             ```
-             удалить книгу "название"
-             ```
-           - **Пример**:
-             ```
-             удалить книгу "Война и мир"
-             ```
-
-        3. **Редактировать книгу**
-           - **Команда**: `редактировать книгу`
-           - **Формат ввода**:
-             ```
-             редактировать книгу "старое_название" "новое_название" "новый_автор" "новый_год" "новый_путь_к_файлу"
-             ```
-           - **Пример**:
-             ```
-             редактировать книгу "Война и мир" "Война и мир (издание 2023)" "Лев Толстой" "1869" "C:\Books\war_and_peace_2023.pdf"
-             ```
-
-        4. **Найти книгу**
-           - **Команда**: `найти книгу`
-           - **Формат ввода**:
-             ```
-             найти книгу "название" автор="имя_автора" год="год" теги="тег1, тег2" жанры="жанр1, жанр2"
-             ```
-           - **Пример**:
-             ```
-             найти книгу "Война и мир" автор="Лев Толстой" год="1869" теги="классика" жанры="роман"
-             ```
-
-        5. **Добавить тег**
-           - **Команда**: `добавить тег`
-           - **Формат ввода**:
-             ```
-             добавить тег "название_тега"
-             ```
-           - **Пример**:
-             ```
-             добавить тег "новый_тег"
-             ```
-
-        6. **Удалить тег**
-           - **Команда**: `удалить тег`
-           - **Формат ввода**:
-             ```
-             удалить тег "название_тега"
-             ```
-           - **Пример**:
-             ```
-             удалить тег "старый_тег"
-             ```
-
-        ---
-
-        ### Заключение
-
-        Приложение BookHive предоставляет удобный интерфейс для управления вашей библиотекой. Следуйте этой инструкции, чтобы максимально эффективно использовать все функции приложения.
-        """
-
-        self.documentation_text.setPlainText(documentation_content)
+        self.documentation_text.setPlainText(content)
 
     def changeTab(self, index):
         if index == 1:
@@ -1769,6 +1654,13 @@ class MyApp(QMainWindow, Ui_MainWindow):
         self.stackedWidget_2.setCurrentIndex(1)
 
 
+    def init_tree_loader(self):
+        self.tree_loader = DataLoader()
+        self.tree_loader.data_ready.connect(self.on_tree_data_loaded)
+
+    def load_tree_main(self):
+        if not self.tree_loader.isRunning():
+            self.tree_loader.start()
 
 class HoverButton(QPushButton):
     def __init__(self, normal_icon, hover_icon, parent=None):
@@ -1785,6 +1677,17 @@ class HoverButton(QPushButton):
     def leaveEvent(self, event):
         self.setIcon(self.normal_icon)
         super().leaveEvent(event)
+
+class DataLoader(QThread):
+    data_ready = pyqtSignal(object, object, object, object)
+
+    def run(self):
+        ld = GetData()
+        genres = ld.get_info_about_genres(full=True, flag=False)
+        tags = ld.get_info_about_tags(full=True, flag=False)
+        all_years = ld.get_unique_years()
+        all_authors = ld.get_info_about_authors(author={}, flag=False)
+        self.data_ready.emit(genres, tags, all_years, all_authors)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

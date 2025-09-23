@@ -224,33 +224,6 @@ class DatabaseManager:
                      """, (new_year, book_id))
         except sqlite3.Error as e:
             raise Exception(f"Ошибка при обновлении книги: {str(e)}")
-    
-     def update_author(self, author_id, firstname=None, lastname=None, middlename=None, nickname=None):
-        try:
-            with self.get_connection() as conn:
-                cursor = conn.cursor()
-                updates = []
-                params = []
-
-                if firstname:
-                    updates.append("Name = ?")
-                    params.append(firstname)
-                if lastname:
-                    updates.append("Surname = ?")
-                    params.append(lastname)
-                if middlename:
-                    updates.append("Patronymic = ?")
-                    params.append(middlename)
-                if nickname:
-                    updates.append("Nickname = ?")
-                    params.append(nickname)
-
-                if updates:
-                    query = "UPDATE Authors SET " + ", ".join(updates) + " WHERE Id_author = ?"
-                    params.append(author_id)
-                    cursor.execute(query, params)
-        except sqlite3.Error as e:
-            raise Exception(f"Ошибка при обновлении автора: {str(e)}")
 
 
 def copy_book_file(source_path, book_name, format_name, books_dir="books"):
