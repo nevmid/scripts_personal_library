@@ -544,5 +544,5 @@ class GetData:
             print(e)  
         finally:
             if self.conn:
-                self.close_connection()   
+                self.close_connection()
 

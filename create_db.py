@@ -113,12 +113,10 @@ genres_data = [
     ('Триллер', 'thriller')
 ]
 
-# Функция для создания базы данных и подключения к ней
 def create_database(db_name):
     conn = sqlite3.connect(db_name)
     return conn
 
-# Функция для создания таблицы книг
 def create_books_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -131,7 +129,6 @@ def create_books_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания таблицы жанров
 def create_genres_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -143,7 +140,6 @@ def create_genres_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания связующей таблицы Книги_Жанры
 def create_books_genres_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -157,7 +153,6 @@ def create_books_genres_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания таблицы тегов
 def create_tags_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -168,7 +163,6 @@ def create_tags_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания связующей таблицы Книги_Теги
 def create_books_tags_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -182,7 +176,6 @@ def create_books_tags_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания таблицы авторов
 def create_authors_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -196,7 +189,6 @@ def create_authors_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания связующей таблицы Книги_Авторы
 def create_books_authors_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -210,7 +202,6 @@ def create_books_authors_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания таблицы форматов
 def create_formats_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -221,7 +212,6 @@ def create_formats_table(conn):
     ''')
     conn.commit()
 
-# Функция для создания связующей таблицы Книги_Формат
 def create_books_formats_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -235,7 +225,6 @@ def create_books_formats_table(conn):
     ''')
     conn.commit()
 
-# Функция для заполнения таблицы жанров
 def populate_genres_table(conn):
     cursor = conn.cursor()
     genres = [
@@ -247,7 +236,6 @@ def populate_genres_table(conn):
     cursor.executemany('INSERT INTO Genres (Name_genre, Code) VALUES (?, ?)', genres)
     conn.commit()
 
-# Основная функция для создания и настройки базы данных
 def setup_database(db_name):
     conn = create_database(db_name)
     create_books_table(conn)
@@ -265,7 +253,6 @@ def setup_database(db_name):
 
     return conn
 
-# Функция для вставки данных о жанрах
 def insert_genres(conn, genres):
     cursor = conn.cursor()
     try:
@@ -280,7 +267,6 @@ def insert_genres(conn, genres):
         conn.rollback()
 
 
-# Пример использования
 if __name__ == "__main__":
     db_name = "library.db"
     conn = setup_database(db_name)

@@ -30,10 +30,7 @@ class DatabaseManager:
     
      def delete_book(self, name_book):
          """Удаление книги из БД"""
-      
-         # Так как в папке books имена файлов храняться с знаками _
-         # то вместо них ставим пробелы
-         # print("old: ", name_book)
+
          correct_name_book = "" 
          for ch in name_book:
             if ch != "_":
